@@ -52,7 +52,7 @@ dependencies {
     // PostgreSQL
     implementation(libs.postgresql)
 // Libreria Pcs (utilidades)
-    implementation(libs.libreria.pcs)
+//    implementation(libs.libreria.pcs)
 // Libreria Android
 
 
