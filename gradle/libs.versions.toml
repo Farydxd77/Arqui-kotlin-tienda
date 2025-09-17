@@ -10,7 +10,7 @@ material = "1.13.0"
 activity = "1.11.0"
 constraintlayout = "2.2.1"
 postgresqlVersion = "42.2.9"
-libpcs = "v1.0.4"
+libpcs = "v1.0.5"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,8 +23,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 # Conector JDBC para PostgreSQL
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresqlVersion" }
 # Librería de utilidades
-libreria-pcs = { module = "com.github.programadorcscs:LibreriaPcs", version.ref = "libpcs" }
-
+libreria-pcs = { module = "com.github.programadorescs:LibreriaPcs", version.ref = "libpcs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
