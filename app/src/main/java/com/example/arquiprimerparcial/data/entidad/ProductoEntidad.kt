@@ -1,6 +1,6 @@
-package com.example.arquiprimerparcial.data.model
+package com.example.arquiprimerparcial.data.entidad
 
-data class ProductoModel(
+data class ProductoEntidad(
     var id: Int = 0,
     var descripcion: String = "",
     var codigobarra: String = "",
