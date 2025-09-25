@@ -1,5 +1,6 @@
 package com.example.arquiprimerparcial.presentacion.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -15,18 +16,41 @@ class ProductoAdapter(
     interface IOnClickListener {
         fun clickEditar(producto: ProductoModelo)
         fun clickEliminar(producto: ProductoModelo)
+        fun clickSeleccionar(producto: ProductoModelo)? = null // Para pedidos
     }
 
     inner class ProductoViewHolder(private val binding: ItemsProductoBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun enlazar(producto: ProductoModelo) {
-            binding.tvTitulo.text = producto.descripcion
-            binding.tvCodigoBarra.text = producto.codigobarra
-            binding.tvPrecio.text = producto.formatearPrecio()
+            binding.tvTitulo.text = producto.nombre
+            binding.tvCategoria.text = producto.nombreCategoria.ifEmpty { "Sin categoría" }
+            binding.tvStock.text = "Stock: ${producto.stock}"
+            binding.tvPrecio.text = "S/ ${producto.formatearPrecio()}"
+
+            // Color según estado del stock
+            when {
+                producto.sinStock() -> {
+                    binding.tvStock.setTextColor(Color.RED)
+                    binding.root.alpha = 0.6f
+                }
+                producto.stockBajo() -> {
+                    binding.tvStock.setTextColor(Color.parseColor("#FF9800"))
+                    binding.root.alpha = 0.8f
+                }
+                else -> {
+                    binding.tvStock.setTextColor(Color.parseColor("#4CAF50"))
+                    binding.root.alpha = 1.0f
+                }
+            }
 
             binding.ibEditar.setOnClickListener { onClickListener.clickEditar(producto) }
             binding.ibEliminar.setOnClickListener { onClickListener.clickEliminar(producto) }
+
+            // Si se implementa clickSeleccionar, hacer clickeable toda la card
+            onClickListener.clickSeleccionar?.let {
+                binding.root.setOnClickListener { it(producto) }
+            }
         }
     }
 

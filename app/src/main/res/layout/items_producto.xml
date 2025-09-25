@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="wrap_content">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
@@ -11,6 +11,8 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,91 +20,67 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_begin="50dp" />
+            android:layout_height="match_parent"
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/tv_titulo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="8dp"
                 android:text="TITULO"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
                 app:layout_constraintEnd_toStartOf="@+id/ib_editar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/textView5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:text="Cod. Barra"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
-
-            <TextView
-                android:id="@+id/textView6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="16dp"
-                android:text="Precio"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView5" />
-
-            <TextView
-                android:id="@+id/tv_codigo_barra"
+                android:id="@+id/tv_categoria"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:text="Categoría"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="@+id/tv_titulo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_titulo" />
+
+            <TextView
+                android:id="@+id/tv_stock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Dato"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/textView5"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
+                android:text="Stock: 10"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_categoria" />
 
             <TextView
                 android:id="@+id/tv_precio"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Dato"
+                android:layout_marginBottom="8dp"
+                android:text="S/ 0.00"
+                android:textColor="@color/accent"
+                android:textSize="16sp"
+                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/tv_codigo_barra"
-                app:layout_constraintTop_toBottomOf="@+id/tv_codigo_barra" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_stock" />
 
             <ImageButton
                 android:id="@+id/ib_eliminar"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginEnd="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
+                android:src="@android:drawable/ic_menu_delete"
+                app:tint="@color/secondary"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@android:drawable/ic_menu_delete" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
                 android:id="@+id/ib_editar"
@@ -110,13 +88,11 @@
                 android:layout_height="40dp"
                 android:layout_marginEnd="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                app:layout_constraintBottom_toTopOf="@+id/guideline"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="@color/primaryLight"
                 app:layout_constraintEnd_toStartOf="@+id/ib_eliminar"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@android:drawable/ic_menu_edit" />
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </com.google.android.material.card.MaterialCardView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
