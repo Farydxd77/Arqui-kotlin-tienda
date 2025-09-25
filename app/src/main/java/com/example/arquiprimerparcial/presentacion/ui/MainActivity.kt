@@ -7,12 +7,10 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-
 import com.example.arquiprimerparcial.databinding.ActivityMainBinding
 import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
@@ -46,6 +44,15 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
+        // Add button listeners for navigation
+        binding.btnCrearPedido.setOnClickListener {
+            startActivity(Intent(this, CrearPedidoActivity::class.java))
+        }
+
+        binding.btnVerPedidos.setOnClickListener {
+            startActivity(Intent(this, HistorialPedidosActivity::class.java))
+        }
+
         binding.rvLista.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = ProductoAdapter(this@MainActivity)
@@ -71,9 +78,12 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
         startActivity(
             Intent(this, OperacionProductoActivity::class.java).apply {
                 putExtra("id", producto.id)
+                putExtra("nombre", producto.nombre)
                 putExtra("descripcion", producto.descripcion)
-                putExtra("codigobarra", producto.codigobarra)
                 putExtra("precio", producto.precio)
+                putExtra("stock", producto.stock)
+                putExtra("url", producto.url)
+                putExtra("idCategoria", producto.idCategoria)
             }
         )
     }
@@ -81,7 +91,7 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
     override fun clickEliminar(producto: ProductoModelo) {
         MaterialAlertDialogBuilder(this).apply {
             setTitle("Eliminar")
-            setMessage("¿Desea eliminar el registro: ${producto.descripcion}?")
+            setMessage("¿Desea eliminar el registro: ${producto.nombre}?") // Fixed from descripcion
             setCancelable(false)
             setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
             setPositiveButton("SI") { dialog, _ ->

@@ -1,5 +1,11 @@
 package com.example.arquiprimerparcial.presentacion.adapter
 
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.example.arquiprimerparcial.databinding.ItemsPedidoDetalleBinding
+import com.example.arquiprimerparcial.negocio.modelo.DetallePedidoModelo
+
 class PedidoDetalleAdapter(
     private val onClickListener: IOnClickListener
 ) : RecyclerView.Adapter<PedidoDetalleAdapter.DetalleViewHolder>() {

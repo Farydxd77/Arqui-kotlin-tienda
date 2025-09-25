@@ -2,6 +2,7 @@ package com.example.arquiprimerparcial.presentacion.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.arquiprimerparcial.databinding.ActivityHistorialPedidosBinding

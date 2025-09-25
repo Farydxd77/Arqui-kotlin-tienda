@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".presentation.ui.OperacionProductoActivity">
+    tools:context=".presentacion.ui.OperacionProductoActivity">
 
     <include
         android:id="@+id/include_toolbar"
@@ -14,16 +14,15 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize">
-
+        android:layout_marginTop="?attr/actionBarSize"
+        android:padding="16dp">
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_descripcion"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
+            android:hint="Nombre del producto"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -32,16 +31,15 @@
                 android:id="@+id/et_descripcion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Descripcion" />
+                android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_codigo_barra"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            android:hint="Descripción"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/til_descripcion">
@@ -50,16 +48,18 @@
                 android:id="@+id/et_codigo_barra"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Codigo barra" />
+                android:inputType="text"
+                android:minLines="2"
+                android:maxLines="4" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_precio"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
+            android:hint="Precio (S/)"
+            app:prefixText="S/ "
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/til_codigo_barra">
@@ -68,8 +68,45 @@
                 android:id="@+id/et_precio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Precio"
-                android:inputType="number|numberDecimal" />
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campos adicionales opcionales -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_stock"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:hint="Stock inicial"
+            app:layout_constraintEnd_toStartOf="@+id/til_url"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/til_precio">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_stock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="0" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_url"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:hint="URL imagen (opcional)"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/til_stock"
+            app:layout_constraintTop_toBottomOf="@+id/til_precio">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <ProgressBar
@@ -82,6 +119,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

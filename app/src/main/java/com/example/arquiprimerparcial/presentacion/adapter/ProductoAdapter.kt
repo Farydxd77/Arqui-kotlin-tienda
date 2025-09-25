@@ -16,7 +16,7 @@ class ProductoAdapter(
     interface IOnClickListener {
         fun clickEditar(producto: ProductoModelo)
         fun clickEliminar(producto: ProductoModelo)
-        fun clickSeleccionar(producto: ProductoModelo)? = null // Para pedidos
+        fun clickSeleccionar(producto: ProductoModelo) = Unit // Default implementation
     }
 
     inner class ProductoViewHolder(private val binding: ItemsProductoBinding) :
@@ -47,10 +47,8 @@ class ProductoAdapter(
             binding.ibEditar.setOnClickListener { onClickListener.clickEditar(producto) }
             binding.ibEliminar.setOnClickListener { onClickListener.clickEliminar(producto) }
 
-            // Si se implementa clickSeleccionar, hacer clickeable toda la card
-            onClickListener.clickSeleccionar?.let {
-                binding.root.setOnClickListener { it(producto) }
-            }
+            // Para selección en pedidos - hacer clickeable toda la card
+            binding.root.setOnClickListener { onClickListener.clickSeleccionar(producto) }
         }
     }
 

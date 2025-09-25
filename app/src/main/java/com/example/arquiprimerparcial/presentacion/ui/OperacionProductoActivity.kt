@@ -52,35 +52,25 @@ class OperacionProductoActivity : AppCompatActivity() {
 
     private fun cargarDatosProducto() {
         productoId = intent.extras?.getInt("id", 0) ?: 0
-        binding.etDescripcion.setText(intent.extras?.getString("descripcion"))
-        binding.etCodigoBarra.setText(intent.extras?.getString("codigobarra"))
-        binding.etPrecio.setText(intent.extras?.getDouble("precio").toString())
+        binding.etDescripcion.setText(intent.extras?.getString("nombre") ?: "")
+        binding.etCodigoBarra.setText(intent.extras?.getString("descripcion") ?: "")
+        binding.etPrecio.setText(intent.extras?.getDouble("precio", 0.0).toString())
     }
 
     private fun validarDatos(): Boolean {
-        val descripcion = binding.etDescripcion.text.toString().trim()
-        val codigoBarra = binding.etCodigoBarra.text.toString().trim()
+        val nombre = binding.etDescripcion.text.toString().trim()
+        val descripcion = binding.etCodigoBarra.text.toString().trim()
         val precio = binding.etPrecio.text.toString().trim()
 
         when {
-            descripcion.isEmpty() -> {
-                mostrarAdvertencia("La descripción es obligatoria")
+            nombre.isEmpty() -> {
+                mostrarAdvertencia("El nombre del producto es obligatorio")
                 binding.etDescripcion.requestFocus()
                 return false
             }
-            descripcion.length < 3 -> {
-                mostrarAdvertencia("La descripción debe tener al menos 3 caracteres")
+            nombre.length < 3 -> {
+                mostrarAdvertencia("El nombre debe tener al menos 3 caracteres")
                 binding.etDescripcion.requestFocus()
-                return false
-            }
-            codigoBarra.isEmpty() -> {
-                mostrarAdvertencia("El código de barra es obligatorio")
-                binding.etCodigoBarra.requestFocus()
-                return false
-            }
-            !ProductoServicio.validarCodigoBarra(codigoBarra) -> {
-                mostrarAdvertencia("El código de barra debe tener al menos 8 caracteres")
-                binding.etCodigoBarra.requestFocus()
                 return false
             }
             precio.isEmpty() -> {
@@ -103,9 +93,13 @@ class OperacionProductoActivity : AppCompatActivity() {
 
         val producto = ProductoModelo(
             id = productoId,
-            descripcion = binding.etDescripcion.text.toString().trim(),
-            codigobarra = binding.etCodigoBarra.text.toString().trim(),
-            precio = binding.etPrecio.text.toString().toDouble()
+            nombre = binding.etDescripcion.text.toString().trim(),
+            descripcion = binding.etCodigoBarra.text.toString().trim(),
+            precio = binding.etPrecio.text.toString().toDouble(),
+            stock = 0, // Default stock
+            url = "", // Default empty URL
+            idCategoria = 0, // Default no category
+            activo = true
         )
 
         makeCall { ProductoServicio.guardarProducto(producto) }.let { result ->

@@ -211,6 +211,8 @@ object ProductoServicio {
         }
     }
 
+    // Missing method that was being called in OperacionProductoActivity - REMOVED codigobarra validation
+
     fun validarUrl(url: String): Boolean {
         if (url.isBlank()) return true // URL es opcional
         return url.startsWith("http://") || url.startsWith("https://")
@@ -219,17 +221,4 @@ object ProductoServicio {
     fun buscarProductos(query: String): List<ProductoModelo> {
         return obtenerProductos(query)
     }
-
-//    fun obtenerEstadisticasProductos(): ProductoEstadisticasModelo {
-//        val todosProductos = obtenerProductos()
-//
-//        return ProductoEstadisticasModelo(
-//            totalProductos = todosProductos.size,
-//            productosActivos = todosProductos.count { it.activo },
-//            productosInactivos = todosProductos.count { !it.activo },
-//            productosSinStock = todosProductos.count { it.sinStock() },
-//            productosStockBajo = todosProductos.count { it.stockBajo() },
-//            valorTotalInventario = todosProductos.sumOf { it.calcularValorInventario() }
-//        )
-//    }
 }

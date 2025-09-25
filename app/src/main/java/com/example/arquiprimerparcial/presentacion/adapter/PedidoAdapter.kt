@@ -1,6 +1,12 @@
 package com.example.arquiprimerparcial.presentacion.adapter
 
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.example.arquiprimerparcial.databinding.ItemsPedidoBinding
 import com.example.arquiprimerparcial.negocio.modelo.PedidoModelo
+import java.text.SimpleDateFormat
+import java.util.*
 
 class PedidoAdapter(
     private val onClickListener: IOnClickListener
