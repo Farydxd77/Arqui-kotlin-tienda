@@ -23,32 +23,65 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_crear_pedido"
-                android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/accent"
-                android:drawableLeft="@android:drawable/ic_input_add"
-                android:drawableTint="@color/white"
-                android:text="Nuevo Pedido"
-                android:textColor="@color/white"
-                app:cornerRadius="12dp" />
+            <!-- Primera fila -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_crear_pedido"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/accent"
+                    android:drawableLeft="@android:drawable/ic_input_add"
+                    android:drawableTint="@color/white"
+                    android:text="Nuevo Pedido"
+                    android:textColor="@color/white"
+                    app:cornerRadius="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_ver_pedidos"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/primary"
+                    android:drawableLeft="@android:drawable/ic_menu_agenda"
+                    android:drawableTint="@color/white"
+                    android:text="Historial"
+                    android:textColor="@color/white"
+                    app:cornerRadius="12dp" />
+                <!-- Segunda fila - Botón Servidor API -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_servidor_api"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/accent"
+                    android:drawableLeft="@android:drawable/ic_dialog_dialer"
+                    android:drawableTint="@color/white"
+                    android:text="🌐 Servidor API para Clientes"
+                    android:textColor="@color/white"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+
+            <!-- Botón Catálogo -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_ver_pedidos"
-                android:layout_width="0dp"
+                android:id="@+id/btn_ver_catalogo"
+                android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/primary"
-                android:drawableLeft="@android:drawable/ic_menu_agenda"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/primaryLight"
+                android:drawableLeft="@android:drawable/ic_menu_view"
                 android:drawableTint="@color/white"
-                android:text="Historial"
+                android:text="Ver Catálogo de Productos"
                 android:textColor="@color/white"
                 app:cornerRadius="12dp" />
 

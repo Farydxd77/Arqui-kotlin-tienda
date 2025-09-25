@@ -2,9 +2,11 @@ package com.example.arquiprimerparcial.presentacion.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityCrearPedidoBinding
 import com.example.arquiprimerparcial.negocio.modelo.DetallePedidoModelo
 import com.example.arquiprimerparcial.negocio.modelo.PedidoModelo
@@ -32,20 +34,36 @@ class CrearPedidoActivity : AppCompatActivity(),
         binding = ActivityCrearPedidoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initToolbar()
         initUI()
         initListeners()
         cargarProductos()
     }
 
+    private fun initToolbar() {
+        binding.includeToolbar.toolbar.apply {
+            setSupportActionBar(this)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            subtitle = "Crear nuevo pedido"
+            navigationIcon = AppCompatResources.getDrawable(
+                this@CrearPedidoActivity,
+                R.drawable.baseline_arrow_back_24
+            )
+            setNavigationOnClickListener {
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
+        // Ocultar el botón de acción del toolbar
+        binding.includeToolbar.ibAccion.isVisible = false
+    }
+
     private fun initUI() {
-        // Setup RecyclerView productos
         productoAdapter = ProductoAdapter(this)
         binding.rvProductos.apply {
             layoutManager = LinearLayoutManager(this@CrearPedidoActivity)
             adapter = productoAdapter
         }
 
-        // Setup RecyclerView detalles pedido
         detalleAdapter = PedidoDetalleAdapter(this)
         binding.rvDetallesPedido.apply {
             layoutManager = LinearLayoutManager(this@CrearPedidoActivity)
@@ -75,25 +93,17 @@ class CrearPedidoActivity : AppCompatActivity(),
         })
     }
 
-    // Implementación ProductoAdapter.IOnClickListener
     override fun clickSeleccionar(producto: ProductoModelo) {
         if (producto.sinStock()) {
             mostrarError("Producto sin stock disponible")
             return
         }
-
         mostrarDialogoCantidad(producto)
     }
 
-    override fun clickEditar(producto: ProductoModelo) {
-        // No implementado en esta pantalla
-    }
+    override fun clickEditar(producto: ProductoModelo) {}
+    override fun clickEliminar(producto: ProductoModelo) {}
 
-    override fun clickEliminar(producto: ProductoModelo) {
-        // No implementado en esta pantalla
-    }
-
-    // Implementación PedidoDetalleAdapter.IOnClickListener
     override fun clickEliminar(detalle: DetallePedidoModelo) {
         pedidoActual.eliminarDetalle(detalle.idProducto)
         actualizarUI()
@@ -105,31 +115,30 @@ class CrearPedidoActivity : AppCompatActivity(),
     }
 
     private fun mostrarDialogoCantidad(producto: ProductoModelo) {
-        val dialog = MaterialAlertDialogBuilder(this)
-            .setTitle("Agregar ${producto.nombre}")
-            .setMessage("Stock disponible: ${producto.stock}")
-
         val input = android.widget.EditText(this).apply {
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             hint = "Cantidad"
         }
 
-        dialog.setView(input)
-        dialog.setPositiveButton("Agregar") { _, _ ->
-            val cantidadStr = input.text.toString()
-            if (cantidadStr.isNotEmpty()) {
-                val cantidad = cantidadStr.toIntOrNull() ?: 0
-                if (cantidad > 0 && cantidad <= producto.stock) {
-                    val detalle = DetallePedidoModelo.desdeProducto(producto, cantidad)
-                    pedidoActual.agregarDetalle(detalle)
-                    actualizarUI()
-                } else {
-                    mostrarError("Cantidad inválida o mayor al stock disponible")
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Agregar ${producto.nombre}")
+            .setMessage("Stock disponible: ${producto.stock}")
+            .setView(input)
+            .setPositiveButton("Agregar") { _, _ ->
+                val cantidadStr = input.text.toString()
+                if (cantidadStr.isNotEmpty()) {
+                    val cantidad = cantidadStr.toIntOrNull() ?: 0
+                    if (cantidad > 0 && cantidad <= producto.stock) {
+                        val detalle = DetallePedidoModelo.desdeProducto(producto, cantidad)
+                        pedidoActual.agregarDetalle(detalle)
+                        actualizarUI()
+                    } else {
+                        mostrarError("Cantidad inválida o mayor al stock disponible")
+                    }
                 }
             }
-        }
-        dialog.setNegativeButton("Cancelar", null)
-        dialog.show()
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun cargarProductos(filtro: String = "") = lifecycleScope.launch {
@@ -151,7 +160,6 @@ class CrearPedidoActivity : AppCompatActivity(),
     private fun actualizarResumenPedido() {
         binding.tvTotalPedido.text = "Total: S/ ${pedidoActual.formatearTotal()}"
         binding.tvCantidadProductos.text = "${pedidoActual.cantidadTotalProductos()} productos"
-
         binding.btnFinalizarPedido.isEnabled = pedidoActual.detalles.isNotEmpty()
     }
 

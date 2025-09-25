@@ -34,15 +34,20 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
-
         viewBinding = true
-
     }
 
+    // Necesario para Ktor
+    packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+        }
+    }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -51,10 +56,17 @@ dependencies {
 
     // PostgreSQL
     implementation(libs.postgresql)
-// Libreria Pcs (utilidades)
-//    implementation(libs.libreria.pcs)
-// Libreria Android
 
+    // Ktor Server para Android
+    implementation("io.ktor:ktor-server-core:2.3.7")
+    implementation("io.ktor:ktor-server-netty:2.3.7")
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-serialization-gson:2.3.7")
+    implementation("io.ktor:ktor-server-cors:2.3.7")
+
+    // Logging
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("org.slf4j:slf4j-api:2.0.9")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

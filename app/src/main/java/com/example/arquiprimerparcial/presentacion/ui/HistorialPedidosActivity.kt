@@ -2,9 +2,11 @@ package com.example.arquiprimerparcial.presentacion.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityHistorialPedidosBinding
 import com.example.arquiprimerparcial.negocio.modelo.PedidoModelo
 import com.example.arquiprimerparcial.negocio.servicio.PedidoServicio
@@ -24,9 +26,27 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
         binding = ActivityHistorialPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initToolbar()
         initUI()
         cargarPedidos()
         cargarResumenDelDia()
+    }
+
+    private fun initToolbar() {
+        binding.includeToolbar.toolbar.apply {
+            setSupportActionBar(this)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            subtitle = "Historial de pedidos"
+            navigationIcon = AppCompatResources.getDrawable(
+                this@HistorialPedidosActivity,
+                R.drawable.baseline_arrow_back_24
+            )
+            setNavigationOnClickListener {
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
+        // Ocultar el botón de acción del toolbar
+        binding.includeToolbar.ibAccion.isVisible = false
     }
 
     private fun initUI() {
