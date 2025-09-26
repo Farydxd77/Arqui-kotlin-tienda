@@ -68,6 +68,18 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("org.slf4j:slf4j-api:2.0.9")
 
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
+    implementation("com.cloudinary:cloudinary-core:1.36.0")
+
+    // Coil para cargar imágenes desde URL (más ligero que Glide)
+    implementation("io.coil-kt:coil:2.5.0")
+
+    // Para seleccionar imágenes
+    implementation("androidx.activity:activity-ktx:1.8.2")
+
+
     testImplementation(libs.junit)
+
+
     androidTestImplementation(libs.androidx.junit)
 }

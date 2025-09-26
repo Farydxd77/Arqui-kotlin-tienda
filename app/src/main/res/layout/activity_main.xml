@@ -57,31 +57,19 @@
                     android:text="Historial"
                     android:textColor="@color/white"
                     app:cornerRadius="12dp" />
-                <!-- Segunda fila - Botón Servidor API -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_servidor_api"
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="@color/accent"
-                    android:drawableLeft="@android:drawable/ic_dialog_dialer"
-                    android:drawableTint="@color/white"
-                    android:text="🌐 Servidor API para Clientes"
-                    android:textColor="@color/white"
-                    app:cornerRadius="12dp" />
 
             </LinearLayout>
 
-            <!-- Botón Catálogo -->
+            <!-- Segunda fila - Botón Servidor API -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_ver_catalogo"
+                android:id="@+id/btn_servidor_api"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="@color/primaryLight"
-                android:drawableLeft="@android:drawable/ic_menu_view"
+                android:backgroundTint="@color/secondary"
+                android:drawableLeft="@android:drawable/ic_dialog_dialer"
                 android:drawableTint="@color/white"
-                android:text="Ver Catálogo de Productos"
+                android:text="🌐 Servidor API para Clientes"
                 android:textColor="@color/white"
                 app:cornerRadius="12dp" />
 

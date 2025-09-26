@@ -21,6 +21,9 @@
             android:exported="false" />
 
         <activity
+            android:name=".presentacion.ui.ServidorActivity"
+            android:exported="false" />
+        <activity
             android:name=".presentacion.ui.HistorialPedidosActivity"
             android:exported="false" />
 

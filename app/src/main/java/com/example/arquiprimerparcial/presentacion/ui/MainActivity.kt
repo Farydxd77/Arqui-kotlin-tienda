@@ -16,9 +16,10 @@ import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
 import com.example.arquiprimerparcial.presentacion.adapter.ProductoAdapter
 import com.example.arquiprimerparcial.presentacion.common.UiState
-import com.example.arquiprimerparcial.presentacion.common.makeCall
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
     private lateinit var binding: ActivityMainBinding
@@ -44,7 +45,10 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        // Add button listeners for navigation
+        binding.btnServidorApi.setOnClickListener {
+            startActivity(Intent(this, ServidorActivity::class.java))
+        }
+
         binding.btnCrearPedido.setOnClickListener {
             startActivity(Intent(this, CrearPedidoActivity::class.java))
         }
@@ -91,7 +95,7 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
     override fun clickEliminar(producto: ProductoModelo) {
         MaterialAlertDialogBuilder(this).apply {
             setTitle("Eliminar")
-            setMessage("¿Desea eliminar el registro: ${producto.nombre}?") // Fixed from descripcion
+            setMessage("¿Desea eliminar el registro: ${producto.nombre}?")
             setCancelable(false)
             setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
             setPositiveButton("SI") { dialog, _ ->
@@ -104,14 +108,20 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
     private fun cargarProductos(filtro: String) = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
-        makeCall { ProductoServicio.obtenerProductos(filtro) }.let { result ->
-            binding.progressBar.isVisible = false
+        val result = withContext(Dispatchers.IO) {
+            try {
+                UiState.Success(ProductoServicio.obtenerProductos(filtro))
+            } catch (e: Exception) {
+                UiState.Error(e.message.orEmpty())
+            }
+        }
 
-            when (result) {
-                is UiState.Error -> mostrarError(result.message)
-                is UiState.Success -> {
-                    (binding.rvLista.adapter as ProductoAdapter).setList(result.data)
-                }
+        binding.progressBar.isVisible = false
+
+        when (result) {
+            is UiState.Error -> mostrarError(result.message)
+            is UiState.Success -> {
+                (binding.rvLista.adapter as ProductoAdapter).setList(result.data)
             }
         }
     }
@@ -119,18 +129,24 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
     private fun eliminarProducto(id: Int) = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
-        makeCall { ProductoServicio.eliminarProducto(id) }.let { result ->
-            binding.progressBar.isVisible = false
+        val result = withContext(Dispatchers.IO) {
+            try {
+                UiState.Success(ProductoServicio.eliminarProducto(id))
+            } catch (e: Exception) {
+                UiState.Error(e.message.orEmpty())
+            }
+        }
 
-            when (result) {
-                is UiState.Error -> mostrarError(result.message)
-                is UiState.Success -> {
-                    if (result.data.isSuccess) {
-                        Toast.makeText(this@MainActivity, "Registro eliminado", Toast.LENGTH_SHORT).show()
-                        cargarProductos(binding.etBuscar.text.toString().trim())
-                    } else {
-                        mostrarError("Error al eliminar el producto")
-                    }
+        binding.progressBar.isVisible = false
+
+        when (result) {
+            is UiState.Error -> mostrarError(result.message)
+            is UiState.Success -> {
+                if (result.data.isSuccess) {
+                    Toast.makeText(this@MainActivity, "Registro eliminado", Toast.LENGTH_SHORT).show()
+                    cargarProductos(binding.etBuscar.text.toString().trim())
+                } else {
+                    mostrarError("Error al eliminar el producto")
                 }
             }
         }
