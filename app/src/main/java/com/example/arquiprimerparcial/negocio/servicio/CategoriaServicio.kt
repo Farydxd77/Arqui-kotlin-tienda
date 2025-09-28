@@ -1,59 +1,48 @@
 package com.example.arquiprimerparcial.negocio.servicio
 
 import com.example.arquiprimerparcial.data.dao.CategoriaDao
-import com.example.arquiprimerparcial.data.entidad.CategoriaEntidad
-import com.example.arquiprimerparcial.negocio.modelo.CategoriaModelo
 
 object CategoriaServicio {
 
-
-
-    fun listarCategorias(): List<CategoriaModelo> {
-        return CategoriaDao.listar().map { entidad ->
-            CategoriaModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion
-            )
-        }
+    // Retorna lista de arrays: [id, nombre, descripcion]
+    fun listarCategorias(): List<Array<Any>> {
+        return CategoriaDao.listar()
     }
 
-    fun obtenerCategoriasConFiltro(filtro: String): List<CategoriaModelo> {
-        return CategoriaDao.listarConFiltro(filtro).map { entidad ->
-            CategoriaModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion
-            )
-        }
+    fun obtenerCategoriasConFiltro(filtro: String): List<Array<Any>> {
+        return CategoriaDao.listarConFiltro(filtro)
     }
 
-    fun guardarCategoria(categoria: CategoriaModelo): Result<Boolean> {
+    fun guardarCategoria(id: Int, nombre: String, descripcion: String): Result<Boolean> {
         return try {
-            // Validaciones de negocio
-            if (!categoria.esValida()) {
-                return Result.failure(Exception("Datos de la categoría inválidos"))
+            // Validaciones de negocio primitivas
+            if (nombre.isBlank()) {
+                return Result.failure(Exception("El nombre de la categoría es obligatorio"))
             }
 
-            if (categoria.nombre.length < 2) {
+            if (nombre.length < 2) {
                 return Result.failure(Exception("El nombre debe tener al menos 2 caracteres"))
             }
 
+            if (nombre.length > 50) {
+                return Result.failure(Exception("El nombre no puede exceder 50 caracteres"))
+            }
+
+            if (descripcion.length > 200) {
+                return Result.failure(Exception("La descripción no puede exceder 200 caracteres"))
+            }
+
             // Verificar si el nombre ya existe
-            if (CategoriaDao.existeNombre(categoria.nombre, categoria.id)) {
+            if (CategoriaDao.existeNombre(nombre, id)) {
                 return Result.failure(Exception("Ya existe una categoría con este nombre"))
             }
 
-            val entidad = CategoriaEntidad(
-                id = categoria.id,
-                nombre = categoria.nombre.trim(),
-                descripcion = categoria.descripcion.trim()
-            )
-
-            val resultado = if (categoria.id == 0) {
-                CategoriaDao.insertar(entidad)
+            val resultado = if (id == 0) {
+                // Crear nueva categoría
+                CategoriaDao.insertar(nombre.trim(), descripcion.trim())
             } else {
-                CategoriaDao.actualizar(entidad)
+                // Actualizar categoría existente
+                CategoriaDao.actualizar(id, nombre.trim(), descripcion.trim())
             }
 
             if (resultado) {
@@ -89,13 +78,25 @@ object CategoriaServicio {
         }
     }
 
-    fun obtenerCategoriaPorId(id: Int): CategoriaModelo? {
-        return CategoriaDao.obtenerPorId(id)?.let { entidad ->
-            CategoriaModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion
-            )
-        }
+    // Retorna array [id, nombre, descripcion] o null
+    fun obtenerCategoriaPorId(id: Int): Array<Any>? {
+        return CategoriaDao.obtenerPorId(id)
+    }
+
+    // Validaciones primitivas
+    fun validarNombre(nombre: String): Boolean {
+        return nombre.isNotBlank() && nombre.length >= 2 && nombre.length <= 50
+    }
+
+    fun validarDescripcion(descripcion: String): Boolean {
+        return descripcion.length <= 200
+    }
+
+    fun existeNombre(nombre: String, idExcluir: Int = 0): Boolean {
+        return CategoriaDao.existeNombre(nombre, idExcluir)
+    }
+
+    fun contarProductosEnCategoria(idCategoria: Int): Int {
+        return CategoriaDao.contarProductos(idCategoria)
     }
 }

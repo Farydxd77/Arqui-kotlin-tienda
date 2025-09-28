@@ -2,111 +2,76 @@ package com.example.arquiprimerparcial.negocio.servicio
 
 import com.example.arquiprimerparcial.data.dao.CategoriaDao
 import com.example.arquiprimerparcial.data.dao.ProductoDao
-import com.example.arquiprimerparcial.data.entidad.ProductoEntidad
-import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 
 object ProductoServicio {
 
-    fun listarProductos(filtro: String = ""): List<ProductoModelo> {
-        return ProductoDao.listarProducto(filtro).map { entidad ->
-            val categoria = if (entidad.id_categoria > 0) {
-                CategoriaDao.obtenerPorId(entidad.id_categoria)
-            } else null
-
-            ProductoModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion,
-                url = entidad.url,
-                precio = entidad.precio,
-                stock = entidad.stock,
-                idCategoria = entidad.id_categoria,
-                activo = entidad.activo,
-                nombreCategoria = categoria?.nombre ?: ""
-            )
-        }
+    // Retorna lista de arrays: [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre]
+    fun listarProductos(filtro: String = ""): List<Array<Any>> {
+        return ProductoDao.listarProducto(filtro)
     }
 
-    fun obtenerProductosPorCategoria(idCategoria: Int): List<ProductoModelo> {
-        return ProductoDao.listarPorCategoria(idCategoria).map { entidad ->
-            val categoria = CategoriaDao.obtenerPorId(entidad.id_categoria)
-
-            ProductoModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion,
-                url = entidad.url,
-                precio = entidad.precio,
-                stock = entidad.stock,
-                idCategoria = entidad.id_categoria,
-                activo = entidad.activo,
-                nombreCategoria = categoria?.nombre ?: ""
-            )
-        }
+    fun obtenerProductosPorCategoria(idCategoria: Int): List<Array<Any>> {
+        return ProductoDao.listarPorCategoria(idCategoria)
     }
 
-    fun obtenerProductoPorId(id: Int): ProductoModelo? {
-        return ProductoDao.obtenerPorId(id)?.let { entidad ->
-            val categoria = if (entidad.id_categoria > 0) {
-                CategoriaDao.obtenerPorId(entidad.id_categoria)
-            } else null
-
-            ProductoModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion,
-                url = entidad.url,
-                precio = entidad.precio,
-                stock = entidad.stock,
-                idCategoria = entidad.id_categoria,
-                activo = entidad.activo,
-                nombreCategoria = categoria?.nombre ?: ""
-            )
-        }
+    // Retorna array [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre] o null
+    fun obtenerProductoPorId(id: Int): Array<Any>? {
+        return ProductoDao.obtenerPorId(id)
     }
 
-    fun crearProductoactualizar(producto: ProductoModelo): Result<Boolean> {
+    fun crearProductoActualizar(id: Int, nombre: String, descripcion: String, url: String,
+                                precio: Double, stock: Int, idCategoria: Int, activo: Boolean = true): Result<Boolean> {
         return try {
-            // Validaciones de negocio
-            if (!producto.esValido()) {
-                return Result.failure(Exception("Datos del producto inválidos"))
+            // Validaciones de negocio primitivas
+            if (nombre.isBlank()) {
+                return Result.failure(Exception("El nombre del producto es obligatorio"))
             }
 
-            if (producto.precio < 0.01) {
+            if (nombre.length < 3) {
+                return Result.failure(Exception("El nombre debe tener al menos 3 caracteres"))
+            }
+
+            if (nombre.length > 200) {
+                return Result.failure(Exception("El nombre no puede exceder 200 caracteres"))
+            }
+
+            if (precio < 0.01) {
                 return Result.failure(Exception("El precio debe ser mayor a 0.01"))
             }
 
-            if (producto.nombre.length < 2) {
-                return Result.failure(Exception("El nombre debe tener al menos 2 caracteres"))
-            }
-
-            if (producto.stock < 0) {
+            if (stock < 0) {
                 return Result.failure(Exception("El stock no puede ser negativo"))
             }
 
+            if (descripcion.length > 500) {
+                return Result.failure(Exception("La descripción no puede exceder 500 caracteres"))
+            }
+
+            // Validar URL si no está vacía
+            if (url.isNotEmpty() && !validarUrl(url)) {
+                return Result.failure(Exception("La URL debe comenzar con http:// o https://"))
+            }
+
             // Validar que la categoría existe si se especifica
-            if (producto.idCategoria > 0) {
-                val categoria = CategoriaDao.obtenerPorId(producto.idCategoria)
+            if (idCategoria > 0) {
+                val categoria = CategoriaDao.obtenerPorId(idCategoria)
                 if (categoria == null) {
                     return Result.failure(Exception("La categoría seleccionada no existe"))
                 }
             }
 
-            val entidad = ProductoEntidad(
-                id = producto.id,
-                nombre = producto.nombre.trim(),
-                descripcion = producto.descripcion.trim(),
-                url = producto.url.trim(),
-                precio = producto.precio,
-                stock = producto.stock,
-                id_categoria = if (producto.idCategoria == 0) 0 else producto.idCategoria,
-                activo = producto.activo
-            )
-
-            val resultado = if (producto.id == 0) {
-                ProductoDao.crearProducto(entidad)
+            val resultado = if (id == 0) {
+                // Crear nuevo producto
+                ProductoDao.crearProducto(
+                    nombre.trim(), descripcion.trim(), url.trim(),
+                    precio, stock, idCategoria, activo
+                )
             } else {
-                ProductoDao.actualizarProducto(entidad)
+                // Actualizar producto existente
+                ProductoDao.actualizarProducto(
+                    id, nombre.trim(), descripcion.trim(), url.trim(),
+                    precio, stock, idCategoria, activo
+                )
             }
 
             if (resultado) {
@@ -125,11 +90,11 @@ object ProductoServicio {
                 return Result.failure(Exception("ID de producto inválido"))
             }
 
-            val resultado = ProductoDao.desactivarProducto(id) // Eliminación lógica
+            val resultado = ProductoDao.desactivarProducto(id)
             if (resultado) {
                 Result.success(true)
             } else {
-                Result.failure(Exception("Error al eliminar el producto"))
+                Result.failure(Exception("Error al desactivar el producto"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -138,13 +103,27 @@ object ProductoServicio {
 
     fun activarProducto(id: Int): Result<Boolean> {
         return try {
-            val producto = ProductoDao.obtenerPorId(id)
-            if (producto == null) {
+            if (id <= 0) {
+                return Result.failure(Exception("ID de producto inválido"))
+            }
+
+            // Obtener producto actual
+            val productoArray = ProductoDao.obtenerPorId(id)
+            if (productoArray == null) {
                 return Result.failure(Exception("Producto no encontrado"))
             }
 
-            producto.activo = true
-            val resultado = ProductoDao.actualizarProducto(producto)
+            // Actualizar solo el estado activo
+            val resultado = ProductoDao.actualizarProducto(
+                id = productoArray[0] as Int,
+                nombre = productoArray[1] as String,
+                descripcion = productoArray[2] as String,
+                url = productoArray[3] as String,
+                precio = productoArray[4] as Double,
+                stock = productoArray[5] as Int,
+                idCategoria = productoArray[6] as Int,
+                activo = true
+            )
 
             if (resultado) {
                 Result.success(true)
@@ -173,26 +152,11 @@ object ProductoServicio {
         }
     }
 
-    fun obtenerProductosStockBajo(limite: Int = 5): List<ProductoModelo> {
-        return ProductoDao.listarStockBajo(limite).map { entidad ->
-            val categoria = if (entidad.id_categoria > 0) {
-                CategoriaDao.obtenerPorId(entidad.id_categoria)
-            } else null
-
-            ProductoModelo(
-                id = entidad.id,
-                nombre = entidad.nombre,
-                descripcion = entidad.descripcion,
-                url = entidad.url,
-                precio = entidad.precio,
-                stock = entidad.stock,
-                idCategoria = entidad.id_categoria,
-                activo = entidad.activo,
-                nombreCategoria = categoria?.nombre ?: ""
-            )
-        }
+    fun obtenerProductosStockBajo(limite: Int = 5): List<Array<Any>> {
+        return ProductoDao.listarStockBajo(limite)
     }
 
+    // Validaciones primitivas
     fun validarPrecio(precio: String): Boolean {
         return try {
             val precioDouble = precio.toDouble()
@@ -211,14 +175,46 @@ object ProductoServicio {
         }
     }
 
-    // Missing method that was being called in OperacionProductoActivity - REMOVED codigobarra validation
-
     fun validarUrl(url: String): Boolean {
         if (url.isBlank()) return true // URL es opcional
         return url.startsWith("http://") || url.startsWith("https://")
     }
 
-    fun buscarProductos(query: String): List<ProductoModelo> {
+    fun validarNombre(nombre: String): Boolean {
+        return nombre.isNotBlank() && nombre.length >= 3 && nombre.length <= 200
+    }
+
+    fun validarDescripcion(descripcion: String): Boolean {
+        return descripcion.length <= 500
+    }
+
+    fun buscarProductos(query: String): List<Array<Any>> {
         return listarProductos(query)
+    }
+
+    // Utilidades para trabajar con arrays de productos
+    fun calcularValorInventario(productoArray: Array<Any>): Double {
+        val precio = productoArray[4] as Double
+        val stock = productoArray[5] as Int
+        return precio * stock
+    }
+
+    fun tieneStock(productoArray: Array<Any>): Boolean {
+        val stock = productoArray[5] as Int
+        return stock > 0
+    }
+
+    fun stockBajo(productoArray: Array<Any>, limite: Int = 5): Boolean {
+        val stock = productoArray[5] as Int
+        return stock <= limite && stock > 0
+    }
+
+    fun sinStock(productoArray: Array<Any>): Boolean {
+        val stock = productoArray[5] as Int
+        return stock == 0
+    }
+
+    fun formatearPrecio(precio: Double): String {
+        return String.format("%.2f", precio)
     }
 }

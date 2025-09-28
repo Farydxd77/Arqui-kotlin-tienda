@@ -1,25 +1,34 @@
 package com.example.arquiprimerparcial.presentacion.ui
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityHistorialPedidosBinding
-import com.example.arquiprimerparcial.negocio.modelo.PedidoModelo
+import com.example.arquiprimerparcial.databinding.ItemsPedidoBinding
 import com.example.arquiprimerparcial.negocio.servicio.HistorialPedidosServicio
-import com.example.arquiprimerparcial.presentacion.adapter.PedidoAdapter
 import com.example.arquiprimerparcial.presentacion.common.UiState
 import com.example.arquiprimerparcial.presentacion.common.makeCall
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
-class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickListener {
+class HistorialPedidosActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistorialPedidosBinding
-    private lateinit var pedidoAdapter: PedidoAdapter
+    private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
+    // ✅ SOLO PRIMITIVOS
+    private var listaPedidos = mutableListOf<Map<String, Any>>()
+    private var ventasDelDia = 0.0
+    private var totalPedidosHoy = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,14 +57,55 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
     }
 
     private fun initUI() {
-        pedidoAdapter = PedidoAdapter(this)
         binding.rvPedidos.apply {
             layoutManager = LinearLayoutManager(this@HistorialPedidosActivity)
-            adapter = pedidoAdapter
+            adapter = PedidoAdapter()
         }
     }
 
-    // ✅ MÉTODO UNIFICADO para cargar todo
+    // ✅ ADAPTADOR INTERNO PARA PEDIDOS
+    inner class PedidoAdapter : RecyclerView.Adapter<PedidoAdapter.PedidoViewHolder>() {
+
+        inner class PedidoViewHolder(private val binding: ItemsPedidoBinding) :
+            RecyclerView.ViewHolder(binding.root) {
+
+            fun enlazar(pedido: Map<String, Any>) {
+                val id = pedido["id"] as Int
+                val nombreCliente = pedido["nombreCliente"] as String
+                val fecha = pedido["fecha"] as String
+                val total = pedido["total"] as Double
+                val cantidadProductos = pedido["cantidadProductos"] as Int
+                val detalles = pedido["detalles"] as List<Map<String, Any>>
+
+                binding.tvNumeroPedido.text = "#${id.toString().padStart(3, '0')}"
+                binding.tvNombreCliente.text = nombreCliente
+                binding.tvFecha.text = fecha
+                binding.tvTotal.text = "S/ ${"%.2f".format(total)}"
+                binding.tvCantidadProductos.text = "$cantidadProductos productos"
+
+                binding.root.setOnClickListener {
+                    verDetallePedido(id, nombreCliente, fecha, total, detalles)
+                }
+
+                binding.btnEliminar.setOnClickListener {
+                    confirmarEliminar(id)
+                }
+            }
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PedidoViewHolder {
+            return PedidoViewHolder(
+                ItemsPedidoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            )
+        }
+
+        override fun getItemCount(): Int = listaPedidos.size
+
+        override fun onBindViewHolder(holder: PedidoViewHolder, position: Int) {
+            holder.enlazar(listaPedidos[position])
+        }
+    }
+
     private fun cargarDatos() = lifecycleScope.launch {
         cargarListaPedidos()
         cargarEstadisticas()
@@ -69,7 +119,32 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
         }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
-                is UiState.Success -> pedidoAdapter.setList(result.data)
+                is UiState.Success -> {
+                    // Convertir modelos a primitivos
+                    listaPedidos.clear()
+                    result.data.forEach { pedido ->
+                        // Convertir detalles también
+                        val detallesPrimitivos = pedido.detalles.map { detalle ->
+                            mapOf(
+                                "idProducto" to detalle.idProducto,
+                                "nombreProducto" to detalle.nombreProducto,
+                                "precioUnitario" to detalle.precioUnitario,
+                                "cantidad" to detalle.cantidad,
+                                "subtotal" to detalle.subtotal
+                            )
+                        }
+
+                        listaPedidos.add(mapOf(
+                            "id" to pedido.id,
+                            "nombreCliente" to pedido.nombreCliente,
+                            "fecha" to (pedido.fechaPedido?.let { dateFormat.format(Date(it.time)) } ?: ""),
+                            "total" to pedido.total,
+                            "cantidadProductos" to pedido.cantidadTotalProductos(),
+                            "detalles" to detallesPrimitivos
+                        ))
+                    }
+                    binding.rvPedidos.adapter?.notifyDataSetChanged()
+                }
                 is UiState.Error -> mostrarError(result.message)
             }
         }
@@ -82,6 +157,9 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
             when (result) {
                 is UiState.Success -> {
                     val (ventas, totalPedidos) = result.data
+                    ventasDelDia = ventas
+                    totalPedidosHoy = totalPedidos
+
                     binding.tvVentasDelDia.text = "S/ ${"%.2f".format(ventas)}"
                     binding.tvTotalPedidos.text = "$totalPedidos pedidos"
                 }
@@ -94,8 +172,14 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
         }
     }
 
-    override fun clickVerDetalle(pedido: PedidoModelo) {
-        val mensaje = construirMensajeDetalle(pedido)
+    private fun verDetallePedido(
+        id: Int,
+        nombreCliente: String,
+        fecha: String,
+        total: Double,
+        detalles: List<Map<String, Any>>
+    ) {
+        val mensaje = construirMensajeDetalle(id, nombreCliente, fecha, total, detalles)
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Detalle del Pedido")
@@ -104,23 +188,22 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
             .show()
     }
 
-    override fun clickEliminar(pedido: PedidoModelo) {
+    private fun confirmarEliminar(idPedido: Int) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Eliminar Pedido")
-            .setMessage("¿Está seguro de eliminar el pedido #${pedido.id}?")
+            .setMessage("¿Está seguro de eliminar el pedido #$idPedido?")
             .setPositiveButton("Eliminar") { _, _ ->
-                eliminarPedido(pedido.id)
+                eliminarPedido(idPedido)
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    // ✅ MÉTODO SEPARADO para eliminar
     private fun eliminarPedido(idPedido: Int) = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
         makeCall {
-            HistorialPedidosServicio.eliminarPedidoCompleto(idPedido)  // ✅ USAR SOLO HistorialPedidosServicio
+            HistorialPedidosServicio.eliminarPedidoCompleto(idPedido)
         }.let { result ->
             binding.progressBar.isVisible = false
 
@@ -128,7 +211,11 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
                 is UiState.Success -> {
                     if (result.data.isSuccess) {
                         mostrarExito("Pedido eliminado correctamente")
-                        cargarDatos() // ✅ RECARGAR AMBOS: lista y estadísticas
+                        // Eliminar de la lista local
+                        listaPedidos.removeAll { it["id"] == idPedido }
+                        binding.rvPedidos.adapter?.notifyDataSetChanged()
+                        // Recargar estadísticas
+                        cargarEstadisticas()
                     } else {
                         mostrarError(result.data.exceptionOrNull()?.message ?: "Error al eliminar")
                     }
@@ -138,19 +225,29 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
         }
     }
 
-    // ✅ MÉTODO SEPARADO para construir mensaje
-    private fun construirMensajeDetalle(pedido: PedidoModelo): String {
+    private fun construirMensajeDetalle(
+        id: Int,
+        nombreCliente: String,
+        fecha: String,
+        total: Double,
+        detalles: List<Map<String, Any>>
+    ): String {
         return buildString {
-            append("📦 Pedido #${pedido.id}\n\n")
-            append("👤 Cliente: ${pedido.nombreCliente}\n")
-            append("📅 Fecha: ${pedido.fechaPedido}\n\n")
+            append("📦 Pedido #$id\n\n")
+            append("👤 Cliente: $nombreCliente\n")
+            append("📅 Fecha: $fecha\n\n")
             append("🛒 Productos:\n")
-            pedido.detalles.forEach { detalle ->
-                append("• ${detalle.nombreProducto}\n")
-                append("  ${detalle.cantidad} x S/ ${detalle.formatearPrecioUnitario()}")
-                append(" = S/ ${detalle.formatearSubtotal()}\n")
+            detalles.forEach { detalle ->
+                val nombreProducto = detalle["nombreProducto"] as String
+                val cantidad = detalle["cantidad"] as Int
+                val precioUnitario = detalle["precioUnitario"] as Double
+                val subtotal = detalle["subtotal"] as Double
+
+                append("• $nombreProducto\n")
+                append("  $cantidad x S/ ${"%.2f".format(precioUnitario)}")
+                append(" = S/ ${"%.2f".format(subtotal)}\n")
             }
-            append("\n💰 Total: S/ ${pedido.formatearTotal()}")
+            append("\n💰 Total: S/ ${"%.2f".format(total)}")
         }
     }
 

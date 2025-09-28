@@ -1,13 +1,12 @@
 package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
-import com.example.arquiprimerparcial.data.entidad.PedidoEntidad
-import com.example.arquiprimerparcial.negocio.modelo.DetallePedidoModelo
 
 object HistorialPedidosDao {
 
-    fun listarTodos(): List<PedidoEntidad> {
-        val lista = mutableListOf<PedidoEntidad>()
+    // Retorna lista de arrays: [id, nombre_cliente, fecha_pedido, total]
+    fun listarTodos(): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
 
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
@@ -19,11 +18,11 @@ object HistorialPedidosDao {
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         lista.add(
-                            PedidoEntidad(
-                                id = rs.getInt("id"),
-                                nombre_cliente = rs.getString("nombre_cliente"),
-                                fecha_pedido = rs.getTimestamp("fecha_pedido"),
-                                total = rs.getDouble("total")
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre_cliente"),
+                                rs.getTimestamp("fecha_pedido"),
+                                rs.getDouble("total")
                             )
                         )
                     }
@@ -33,27 +32,31 @@ object HistorialPedidosDao {
         return lista
     }
 
-    fun obtenerDetallesPedido(idPedido: Int): List<DetallePedidoModelo> {
-        val lista = mutableListOf<DetallePedidoModelo>()
+    // Retorna lista de arrays: [id_pedido, id_producto, cantidad, precio_unitario, producto_nombre, producto_url]
+    fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
 
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
-                SELECT dp.id, dp.cantidad, dp.precio_unitario, p.nombre
+                SELECT dp.id_pedido, dp.id_producto, dp.cantidad, dp.precio_unitario, 
+                       p.nombre as producto_nombre, p.url as producto_url
                 FROM detalle_pedido dp
                 JOIN producto p ON dp.id_producto = p.id
                 WHERE dp.id_pedido = ?
+                ORDER BY p.nombre
             """
             conexion.prepareStatement(sql).use { ps ->
                 ps.setInt(1, idPedido)
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         lista.add(
-                            DetallePedidoModelo(
-                                id = rs.getInt("id"),
-                                idPedido = idPedido,
-                                nombreProducto = rs.getString("nombre"),
-                                cantidad = rs.getInt("cantidad"),
-                                precioUnitario = rs.getDouble("precio_unitario")
+                            arrayOf(
+                                rs.getInt("id_pedido"),
+                                rs.getInt("id_producto"),
+                                rs.getInt("cantidad"),
+                                rs.getDouble("precio_unitario"),
+                                rs.getString("producto_nombre"),
+                                rs.getString("producto_url") ?: ""
                             )
                         )
                     }
@@ -78,6 +81,7 @@ object HistorialPedidosDao {
                 }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             0.0
         }
     }
@@ -97,6 +101,7 @@ object HistorialPedidosDao {
                 }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             0
         }
     }
@@ -104,6 +109,7 @@ object HistorialPedidosDao {
     fun eliminarPedido(id: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
+                // Gracias al CASCADE en la DB, se eliminan automáticamente los detalles
                 val sql = "DELETE FROM pedido WHERE id = ?"
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, id)
@@ -111,7 +117,100 @@ object HistorialPedidosDao {
                 }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             false
         }
+    }
+
+    fun calcularVentasPorPeriodo(fechaInicio: String, fechaFin: String): Double {
+        return try {
+            PostgresqlConexion.getConexion().use { conexion ->
+                val sql = """
+                    SELECT COALESCE(SUM(total), 0) as total_ventas
+                    FROM pedido 
+                    WHERE DATE(fecha_pedido) BETWEEN ? AND ?
+                """
+                conexion.prepareStatement(sql).use { ps ->
+                    ps.setString(1, fechaInicio)
+                    ps.setString(2, fechaFin)
+                    ps.executeQuery().use { rs ->
+                        if (rs.next()) rs.getDouble("total_ventas") else 0.0
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0.0
+        }
+    }
+
+    // Retorna Map con estadísticas primitivas
+    fun obtenerEstadisticasCompletas(): Map<String, Any> {
+        val estadisticas = mutableMapOf<String, Any>()
+
+        PostgresqlConexion.getConexion().use { conexion ->
+            // Total de pedidos
+            var sql = "SELECT COUNT(*) as total FROM pedido"
+            conexion.prepareStatement(sql).use { ps ->
+                ps.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        estadisticas["total_pedidos"] = rs.getInt("total")
+                    }
+                }
+            }
+
+            // Total de ventas
+            sql = "SELECT COALESCE(SUM(total), 0) as total_ventas FROM pedido"
+            conexion.prepareStatement(sql).use { ps ->
+                ps.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        estadisticas["total_ventas"] = rs.getDouble("total_ventas")
+                    }
+                }
+            }
+
+            // Promedio por pedido
+            sql = "SELECT COALESCE(AVG(total), 0) as promedio FROM pedido"
+            conexion.prepareStatement(sql).use { ps ->
+                ps.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        estadisticas["promedio_por_pedido"] = rs.getDouble("promedio")
+                    }
+                }
+            }
+        }
+
+        return estadisticas
+    }
+
+    // Retorna lista de arrays con pedidos por rango de fechas
+    fun listarPorRangoFechas(fechaInicio: String, fechaFin: String): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
+
+        PostgresqlConexion.getConexion().use { conexion ->
+            val sql = """
+                SELECT id, nombre_cliente, fecha_pedido, total 
+                FROM pedido 
+                WHERE DATE(fecha_pedido) BETWEEN ? AND ?
+                ORDER BY fecha_pedido DESC
+            """
+            conexion.prepareStatement(sql).use { ps ->
+                ps.setString(1, fechaInicio)
+                ps.setString(2, fechaFin)
+                ps.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        lista.add(
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre_cliente"),
+                                rs.getTimestamp("fecha_pedido"),
+                                rs.getDouble("total")
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        return lista
     }
 }

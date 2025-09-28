@@ -4,7 +4,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -15,8 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityOperacionProductoBinding
-import com.example.arquiprimerparcial.negocio.modelo.CategoriaModelo
-import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 import com.example.arquiprimerparcial.negocio.servicio.CategoriaServicio
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
 import com.example.arquiprimerparcial.presentacion.common.UiState
@@ -32,8 +29,8 @@ class OperacionProductoActivity : AppCompatActivity() {
     private var productoId = 0
     private var imageUrl = ""
     private var selectedImageUri: Uri? = null
-    private var categoriaSeleccionada: CategoriaModelo? = null
-    private var listaCategorias = mutableListOf<CategoriaModelo>()
+    private var categoriaSeleccionada: Array<Any>? = null
+    private var listaCategorias = mutableListOf<Array<Any>>()
 
     private lateinit var imagePickerHelper: ImagePickerHelper
 
@@ -42,10 +39,10 @@ class OperacionProductoActivity : AppCompatActivity() {
         binding = ActivityOperacionProductoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ✨ Inicializar Cloudinary
+        // Inicializar Cloudinary
         CloudinaryHelper.init(this)
 
-        // ✨ Inicializar Image Picker
+        // Inicializar Image Picker
         imagePickerHelper = ImagePickerHelper(this) { uri ->
             selectedImageUri = uri
             binding.ivPreview.load(uri) {
@@ -56,7 +53,7 @@ class OperacionProductoActivity : AppCompatActivity() {
         }
 
         initListener()
-        cargarCategorias() // ✨ Nuevo: cargar categorías
+        cargarCategorias()
         if (intent.extras != null) cargarDatosProducto()
     }
 
@@ -77,25 +74,24 @@ class OperacionProductoActivity : AppCompatActivity() {
             }
         }
 
-        // ✨ Botón para seleccionar imagen
+        // Botón para seleccionar imagen
         binding.btnSeleccionarImagen.setOnClickListener {
             imagePickerHelper.selectImage()
         }
 
-        // ✨ Botón para eliminar imagen
+        // Botón para eliminar imagen
         binding.btnEliminarImagen.setOnClickListener {
             selectedImageUri = null
             imageUrl = ""
             binding.ivPreview.isVisible = false
         }
 
-        // ✨ Nuevo: Selector de categoría
+        // Selector de categoría
         binding.btnSeleccionarCategoria.setOnClickListener {
             mostrarSelectorCategoria()
         }
     }
 
-    // ✨ Nuevo: Cargar categorías
     private fun cargarCategorias() = lifecycleScope.launch {
         try {
             val result = withContext(Dispatchers.IO) {
@@ -103,13 +99,15 @@ class OperacionProductoActivity : AppCompatActivity() {
             }
 
             listaCategorias.clear()
-            listaCategorias.add(CategoriaModelo(0, "Sin categoría", ""))
+            listaCategorias.add(arrayOf(0, "Sin categoría", ""))
             listaCategorias.addAll(result)
 
             // Si es edición, buscar la categoría actual
             if (productoId > 0) {
                 val idCategoriaActual = intent.extras?.getInt("idCategoria", 0) ?: 0
-                categoriaSeleccionada = listaCategorias.find { it.id == idCategoriaActual }
+                categoriaSeleccionada = listaCategorias.find {
+                    (it[0] as Int) == idCategoriaActual
+                }
                 actualizarTextoCategoria()
             }
         } catch (e: Exception) {
@@ -117,15 +115,18 @@ class OperacionProductoActivity : AppCompatActivity() {
         }
     }
 
-    // ✨ Nuevo: Mostrar selector de categoría
     private fun mostrarSelectorCategoria() {
         if (listaCategorias.isEmpty()) {
             mostrarAdvertencia("No hay categorías disponibles")
             return
         }
 
-        val items = listaCategorias.map {
-            if (it.id == 0) it.nombre else "${it.nombre} - ${it.descripcion}"
+        val items = listaCategorias.map { categoria ->
+            val id = categoria[0] as Int
+            val nombre = categoria[1] as String
+            val descripcion = categoria[2] as String
+
+            if (id == 0) nombre else "$nombre - $descripcion"
         }.toTypedArray()
 
         MaterialAlertDialogBuilder(this)
@@ -138,12 +139,11 @@ class OperacionProductoActivity : AppCompatActivity() {
             .show()
     }
 
-    // ✨ Nuevo: Actualizar texto de categoría
     private fun actualizarTextoCategoria() {
         binding.tvCategoriaSeleccionada.text = when {
             categoriaSeleccionada == null -> "Sin categoría"
-            categoriaSeleccionada!!.id == 0 -> "Sin categoría"
-            else -> categoriaSeleccionada!!.nombre
+            (categoriaSeleccionada!![0] as Int) == 0 -> "Sin categoría"
+            else -> categoriaSeleccionada!![1] as String
         }
     }
 
@@ -172,14 +172,14 @@ class OperacionProductoActivity : AppCompatActivity() {
         val stock = binding.etStock.text.toString().trim()
 
         when {
-            nombre.isEmpty() -> {
-                mostrarAdvertencia("El nombre del producto es obligatorio")
+            !ProductoServicio.validarNombre(nombre) -> {
+                mostrarAdvertencia("El nombre debe tener entre 3 y 200 caracteres")
                 binding.etDescripcion.requestFocus()
                 return false
             }
-            nombre.length < 3 -> {
-                mostrarAdvertencia("El nombre debe tener al menos 3 caracteres")
-                binding.etDescripcion.requestFocus()
+            !ProductoServicio.validarDescripcion(descripcion) -> {
+                mostrarAdvertencia("La descripción no puede exceder 500 caracteres")
+                binding.etCodigoBarra.requestFocus()
                 return false
             }
             precio.isEmpty() -> {
@@ -197,6 +197,11 @@ class OperacionProductoActivity : AppCompatActivity() {
                 binding.etStock.requestFocus()
                 return false
             }
+            !ProductoServicio.validarStock(stock) -> {
+                mostrarAdvertencia("El stock debe ser un número válido mayor o igual a 0")
+                binding.etStock.requestFocus()
+                return false
+            }
         }
 
         return true
@@ -206,30 +211,35 @@ class OperacionProductoActivity : AppCompatActivity() {
         binding.progressBar.isVisible = true
 
         try {
-            // ✨ Si hay una imagen seleccionada, subirla primero
+            // Si hay una imagen seleccionada, subirla primero
             if (selectedImageUri != null) {
                 binding.tvEstadoSubida.isVisible = true
                 binding.tvEstadoSubida.text = "☁️ Subiendo imagen a Cloudinary..."
 
                 imageUrl = CloudinaryHelper.uploadImage(selectedImageUri!!)
-
                 binding.tvEstadoSubida.text = "✅ Imagen subida"
             }
 
-            val producto = ProductoModelo(
-                id = productoId,
-                nombre = binding.etDescripcion.text.toString().trim(),
-                descripcion = binding.etCodigoBarra.text.toString().trim(),
-                precio = binding.etPrecio.text.toString().toDouble(),
-                stock = binding.etStock.text.toString().toInt(),
-                url = imageUrl,
-                idCategoria = categoriaSeleccionada?.id ?: 0, // ✨ Asignar categoría
-                activo = true
-            )
+            val nombre = binding.etDescripcion.text.toString().trim()
+            val descripcion = binding.etCodigoBarra.text.toString().trim()
+            val precio = binding.etPrecio.text.toString().toDouble()
+            val stock = binding.etStock.text.toString().toInt()
+            val idCategoria = categoriaSeleccionada?.get(0) as? Int ?: 0
 
             val result = withContext(Dispatchers.IO) {
                 try {
-                    UiState.Success(ProductoServicio.crearProductoactualizar(producto))
+                    UiState.Success(
+                        ProductoServicio.crearProductoActualizar(
+                            id = productoId,
+                            nombre = nombre,
+                            descripcion = descripcion,
+                            url = imageUrl,
+                            precio = precio,
+                            stock = stock,
+                            idCategoria = idCategoria,
+                            activo = true
+                        )
+                    )
                 } catch (e: Exception) {
                     UiState.Error(e.message.orEmpty())
                 }

@@ -1,12 +1,12 @@
 package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
-import com.example.arquiprimerparcial.data.entidad.ProductoEntidad
 
 object ProductoDao {
 
-    fun listarProducto(filtro: String): List<ProductoEntidad> {
-        val lista = mutableListOf<ProductoEntidad>()
+    // Retorna lista de arrays: [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre]
+    fun listarProducto(filtro: String): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
 
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
@@ -22,15 +22,16 @@ object ProductoDao {
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         lista.add(
-                            ProductoEntidad(
-                                id = rs.getInt("id"),
-                                nombre = rs.getString("nombre"),
-                                descripcion = rs.getString("descripcion") ?: "",
-                                url = rs.getString("url") ?: "",
-                                precio = rs.getDouble("precio"),
-                                stock = rs.getInt("stock"),
-                                id_categoria = rs.getInt("id_categoria"),
-                                activo = rs.getBoolean("activo")
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre"),
+                                rs.getString("descripcion") ?: "",
+                                rs.getString("url") ?: "",
+                                rs.getDouble("precio"),
+                                rs.getInt("stock"),
+                                rs.getInt("id_categoria"),
+                                rs.getBoolean("activo"),
+                                rs.getString("categoria_nombre") ?: ""
                             )
                         )
                     }
@@ -40,31 +41,33 @@ object ProductoDao {
         return lista
     }
 
-    fun listarPorCategoria(idCategoria: Int): List<ProductoEntidad> {
-        val lista = mutableListOf<ProductoEntidad>()
+    fun listarPorCategoria(idCategoria: Int): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
 
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
-                SELECT id, nombre, descripcion, url, precio, stock, 
-                       id_categoria, activo
-                FROM producto 
-                WHERE activo = true AND id_categoria = ?
-                ORDER BY nombre
+                SELECT p.id, p.nombre, p.descripcion, p.url, p.precio, p.stock, 
+                       p.id_categoria, p.activo, c.nombre as categoria_nombre
+                FROM producto p
+                LEFT JOIN categoria c ON p.id_categoria = c.id
+                WHERE p.activo = true AND p.id_categoria = ?
+                ORDER BY p.nombre
             """
             conexion.prepareStatement(sql).use { ps ->
                 ps.setInt(1, idCategoria)
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         lista.add(
-                            ProductoEntidad(
-                                id = rs.getInt("id"),
-                                nombre = rs.getString("nombre"),
-                                descripcion = rs.getString("descripcion") ?: "",
-                                url = rs.getString("url") ?: "",
-                                precio = rs.getDouble("precio"),
-                                stock = rs.getInt("stock"),
-                                id_categoria = rs.getInt("id_categoria"),
-                                activo = rs.getBoolean("activo")
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre"),
+                                rs.getString("descripcion") ?: "",
+                                rs.getString("url") ?: "",
+                                rs.getDouble("precio"),
+                                rs.getInt("stock"),
+                                rs.getInt("id_categoria"),
+                                rs.getBoolean("activo"),
+                                rs.getString("categoria_nombre") ?: ""
                             )
                         )
                     }
@@ -74,7 +77,9 @@ object ProductoDao {
         return lista
     }
 
-    fun crearProducto(producto: ProductoEntidad): Boolean {
+    // Parámetros primitivos: nombre, descripcion, url, precio, stock, idCategoria, activo
+    fun crearProducto(nombre: String, descripcion: String, url: String,
+                      precio: Double, stock: Int, idCategoria: Int, activo: Boolean): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 val sql = """
@@ -82,17 +87,17 @@ object ProductoDao {
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """
                 conexion.prepareStatement(sql).use { ps ->
-                    ps.setString(1, producto.nombre)
-                    ps.setString(2, producto.descripcion.ifEmpty { null })
-                    ps.setString(3, producto.url.ifEmpty { null })
-                    ps.setDouble(4, producto.precio)
-                    ps.setInt(5, producto.stock)
-                    if (producto.id_categoria == 0) {
+                    ps.setString(1, nombre)
+                    ps.setString(2, descripcion.ifEmpty { null })
+                    ps.setString(3, url.ifEmpty { null })
+                    ps.setDouble(4, precio)
+                    ps.setInt(5, stock)
+                    if (idCategoria == 0) {
                         ps.setNull(6, java.sql.Types.INTEGER)
                     } else {
-                        ps.setInt(6, producto.id_categoria)
+                        ps.setInt(6, idCategoria)
                     }
-                    ps.setBoolean(7, producto.activo)
+                    ps.setBoolean(7, activo)
                     ps.executeUpdate() > 0
                 }
             }
@@ -102,7 +107,8 @@ object ProductoDao {
         }
     }
 
-    fun actualizarProducto(producto: ProductoEntidad): Boolean {
+    fun actualizarProducto(id: Int, nombre: String, descripcion: String, url: String,
+                           precio: Double, stock: Int, idCategoria: Int, activo: Boolean): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 val sql = """
@@ -112,18 +118,18 @@ object ProductoDao {
                     WHERE id = ?
                 """
                 conexion.prepareStatement(sql).use { ps ->
-                    ps.setString(1, producto.nombre)
-                    ps.setString(2, producto.descripcion.ifEmpty { null })
-                    ps.setString(3, producto.url.ifEmpty { null })
-                    ps.setDouble(4, producto.precio)
-                    ps.setInt(5, producto.stock)
-                    if (producto.id_categoria == 0) {
+                    ps.setString(1, nombre)
+                    ps.setString(2, descripcion.ifEmpty { null })
+                    ps.setString(3, url.ifEmpty { null })
+                    ps.setDouble(4, precio)
+                    ps.setInt(5, stock)
+                    if (idCategoria == 0) {
                         ps.setNull(6, java.sql.Types.INTEGER)
                     } else {
-                        ps.setInt(6, producto.id_categoria)
+                        ps.setInt(6, idCategoria)
                     }
-                    ps.setBoolean(7, producto.activo)
-                    ps.setInt(8, producto.id)
+                    ps.setBoolean(7, activo)
+                    ps.setInt(8, id)
                     ps.executeUpdate() > 0
                 }
             }
@@ -136,8 +142,11 @@ object ProductoDao {
     fun desactivarProducto(id: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
-                // Eliminación lógica: marcar como inactivo
-                val sql = "UPDATE producto SET activo = false WHERE id = ?"
+                val sql = """
+                    UPDATE producto 
+                    SET activo = false 
+                    WHERE id = ?
+                """
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, id)
                     ps.executeUpdate() > 0
@@ -164,28 +173,31 @@ object ProductoDao {
         }
     }
 
-    fun obtenerPorId(id: Int): ProductoEntidad? {
+    // Retorna array [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre] o null
+    fun obtenerPorId(id: Int): Array<Any>? {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 val sql = """
-                    SELECT id, nombre, descripcion, url, precio, stock, 
-                           id_categoria, activo
-                    FROM producto 
-                    WHERE id = ?
+                    SELECT p.id, p.nombre, p.descripcion, p.url, p.precio, p.stock, 
+                           p.id_categoria, p.activo, c.nombre as categoria_nombre
+                    FROM producto p
+                    LEFT JOIN categoria c ON p.id_categoria = c.id
+                    WHERE p.id = ?
                 """
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, id)
                     ps.executeQuery().use { rs ->
                         if (rs.next()) {
-                            ProductoEntidad(
-                                id = rs.getInt("id"),
-                                nombre = rs.getString("nombre"),
-                                descripcion = rs.getString("descripcion") ?: "",
-                                url = rs.getString("url") ?: "",
-                                precio = rs.getDouble("precio"),
-                                stock = rs.getInt("stock"),
-                                id_categoria = rs.getInt("id_categoria"),
-                                activo = rs.getBoolean("activo")
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre"),
+                                rs.getString("descripcion") ?: "",
+                                rs.getString("url") ?: "",
+                                rs.getDouble("precio"),
+                                rs.getInt("stock"),
+                                rs.getInt("id_categoria"),
+                                rs.getBoolean("activo"),
+                                rs.getString("categoria_nombre") ?: ""
                             )
                         } else null
                     }
@@ -200,7 +212,11 @@ object ProductoDao {
     fun actualizarStock(id: Int, nuevoStock: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
-                val sql = "UPDATE producto SET stock = ? WHERE id = ?"
+                val sql = """
+                    UPDATE producto 
+                    SET stock = ? 
+                    WHERE id = ?
+                """
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, nuevoStock)
                     ps.setInt(2, id)
@@ -213,31 +229,33 @@ object ProductoDao {
         }
     }
 
-    fun listarStockBajo(limite: Int = 5): List<ProductoEntidad> {
-        val lista = mutableListOf<ProductoEntidad>()
+    fun listarStockBajo(limite: Int = 5): List<Array<Any>> {
+        val lista = mutableListOf<Array<Any>>()
 
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
-                SELECT id, nombre, descripcion, url, precio, stock, 
-                       id_categoria, activo
-                FROM producto 
-                WHERE activo = true AND stock <= ?
-                ORDER BY stock ASC
+                SELECT p.id, p.nombre, p.descripcion, p.url, p.precio, p.stock, 
+                       p.id_categoria, p.activo, c.nombre as categoria_nombre
+                FROM producto p
+                LEFT JOIN categoria c ON p.id_categoria = c.id
+                WHERE p.activo = true AND p.stock <= ?
+                ORDER BY p.stock ASC
             """
             conexion.prepareStatement(sql).use { ps ->
                 ps.setInt(1, limite)
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         lista.add(
-                            ProductoEntidad(
-                                id = rs.getInt("id"),
-                                nombre = rs.getString("nombre"),
-                                descripcion = rs.getString("descripcion") ?: "",
-                                url = rs.getString("url") ?: "",
-                                precio = rs.getDouble("precio"),
-                                stock = rs.getInt("stock"),
-                                id_categoria = rs.getInt("id_categoria"),
-                                activo = rs.getBoolean("activo")
+                            arrayOf(
+                                rs.getInt("id"),
+                                rs.getString("nombre"),
+                                rs.getString("descripcion") ?: "",
+                                rs.getString("url") ?: "",
+                                rs.getDouble("precio"),
+                                rs.getInt("stock"),
+                                rs.getInt("id_categoria"),
+                                rs.getBoolean("activo"),
+                                rs.getString("categoria_nombre") ?: ""
                             )
                         )
                     }

@@ -12,7 +12,6 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityOperacionCategoriaBinding
-import com.example.arquiprimerparcial.negocio.modelo.CategoriaModelo
 import com.example.arquiprimerparcial.negocio.servicio.CategoriaServicio
 import com.example.arquiprimerparcial.presentacion.common.UiState
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -70,17 +69,12 @@ class OperacionCategoriaActivity : AppCompatActivity() {
                 binding.etNombre.requestFocus()
                 return false
             }
-            nombre.length < 2 -> {
-                mostrarAdvertencia("El nombre debe tener al menos 2 caracteres")
+            !CategoriaServicio.validarNombre(nombre) -> {
+                mostrarAdvertencia("El nombre debe tener entre 2 y 50 caracteres")
                 binding.etNombre.requestFocus()
                 return false
             }
-            nombre.length > 50 -> {
-                mostrarAdvertencia("El nombre no puede exceder 50 caracteres")
-                binding.etNombre.requestFocus()
-                return false
-            }
-            descripcion.length > 200 -> {
+            !CategoriaServicio.validarDescripcion(descripcion) -> {
                 mostrarAdvertencia("La descripción no puede exceder 200 caracteres")
                 binding.etDescripcion.requestFocus()
                 return false
@@ -93,15 +87,12 @@ class OperacionCategoriaActivity : AppCompatActivity() {
     private fun guardarCategoria() = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
-        val categoria = CategoriaModelo(
-            id = categoriaId,
-            nombre = binding.etNombre.text.toString().trim(),
-            descripcion = binding.etDescripcion.text.toString().trim()
-        )
+        val nombre = binding.etNombre.text.toString().trim()
+        val descripcion = binding.etDescripcion.text.toString().trim()
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(CategoriaServicio.guardarCategoria(categoria))
+                UiState.Success(CategoriaServicio.guardarCategoria(categoriaId, nombre, descripcion))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
