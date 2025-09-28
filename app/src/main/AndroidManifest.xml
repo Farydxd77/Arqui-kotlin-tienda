@@ -17,12 +17,17 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
+        <!-- NUEVAS ACTIVITIES DE CATEGORÍAS -->
         <activity
-            android:name=".presentacion.ui.CrearPedidoActivity"
+            android:name=".presentacion.ui.CategoriaActivity"
             android:exported="false" />
 
         <activity
-            android:name=".presentacion.ui.ServidorActivity"
+            android:name=".presentacion.ui.OperacionCategoriaActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".presentacion.ui.CrearPedidoActivity"
             android:exported="false" />
 
         <activity

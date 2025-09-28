@@ -24,7 +24,12 @@ class ProductoAdapter(
 
         fun enlazar(producto: ProductoModelo) {
             binding.tvTitulo.text = producto.nombre
-            binding.tvCategoria.text = producto.nombreCategoria.ifEmpty { "Sin categoría" }
+            // ✨ Mejorado: mostrar categoría o "Sin categoría"
+            binding.tvCategoria.text = when {
+                producto.nombreCategoria.isNotEmpty() -> "🏷️ ${producto.nombreCategoria}"
+                producto.idCategoria > 0 -> "🏷️ Categoría ID: ${producto.idCategoria}"
+                else -> "🏷️ Sin categoría"
+            }
             binding.tvStock.text = "Stock: ${producto.stock}"
             binding.tvPrecio.text = "S/ ${producto.formatearPrecio()}"
 

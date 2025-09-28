@@ -26,7 +26,7 @@
             android:orientation="vertical"
             app:layout_constraintTop_toTopOf="parent">
 
-            <!-- Primera fila -->
+            <!-- Primera fila: Pedidos -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -60,16 +60,16 @@
 
             </LinearLayout>
 
-            <!-- Segunda fila - Botón Servidor API -->
+            <!-- Segunda fila: Categorías -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_servidor_api"
+                android:id="@+id/btn_categorias"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/secondary"
-                android:drawableLeft="@android:drawable/ic_dialog_dialer"
+                android:drawableLeft="@android:drawable/ic_menu_sort_by_size"
                 android:drawableTint="@color/white"
-                android:text="🌐 Servidor API para Clientes"
+                android:text="🏷️ Gestionar Categorías"
                 android:textColor="@color/white"
                 app:cornerRadius="12dp" />
 

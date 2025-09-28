@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -14,7 +15,9 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityOperacionProductoBinding
+import com.example.arquiprimerparcial.negocio.modelo.CategoriaModelo
 import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
+import com.example.arquiprimerparcial.negocio.servicio.CategoriaServicio
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
 import com.example.arquiprimerparcial.presentacion.common.UiState
 import com.example.arquiprimerparcial.utils.CloudinaryHelper
@@ -29,6 +32,8 @@ class OperacionProductoActivity : AppCompatActivity() {
     private var productoId = 0
     private var imageUrl = ""
     private var selectedImageUri: Uri? = null
+    private var categoriaSeleccionada: CategoriaModelo? = null
+    private var listaCategorias = mutableListOf<CategoriaModelo>()
 
     private lateinit var imagePickerHelper: ImagePickerHelper
 
@@ -51,6 +56,7 @@ class OperacionProductoActivity : AppCompatActivity() {
         }
 
         initListener()
+        cargarCategorias() // ✨ Nuevo: cargar categorías
         if (intent.extras != null) cargarDatosProducto()
     }
 
@@ -81,6 +87,63 @@ class OperacionProductoActivity : AppCompatActivity() {
             selectedImageUri = null
             imageUrl = ""
             binding.ivPreview.isVisible = false
+        }
+
+        // ✨ Nuevo: Selector de categoría
+        binding.btnSeleccionarCategoria.setOnClickListener {
+            mostrarSelectorCategoria()
+        }
+    }
+
+    // ✨ Nuevo: Cargar categorías
+    private fun cargarCategorias() = lifecycleScope.launch {
+        try {
+            val result = withContext(Dispatchers.IO) {
+                CategoriaServicio.obtenerCategorias()
+            }
+
+            listaCategorias.clear()
+            listaCategorias.add(CategoriaModelo(0, "Sin categoría", ""))
+            listaCategorias.addAll(result)
+
+            // Si es edición, buscar la categoría actual
+            if (productoId > 0) {
+                val idCategoriaActual = intent.extras?.getInt("idCategoria", 0) ?: 0
+                categoriaSeleccionada = listaCategorias.find { it.id == idCategoriaActual }
+                actualizarTextoCategoria()
+            }
+        } catch (e: Exception) {
+            mostrarError("Error al cargar categorías: ${e.message}")
+        }
+    }
+
+    // ✨ Nuevo: Mostrar selector de categoría
+    private fun mostrarSelectorCategoria() {
+        if (listaCategorias.isEmpty()) {
+            mostrarAdvertencia("No hay categorías disponibles")
+            return
+        }
+
+        val items = listaCategorias.map {
+            if (it.id == 0) it.nombre else "${it.nombre} - ${it.descripcion}"
+        }.toTypedArray()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Seleccionar Categoría")
+            .setItems(items) { _, which ->
+                categoriaSeleccionada = listaCategorias[which]
+                actualizarTextoCategoria()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    // ✨ Nuevo: Actualizar texto de categoría
+    private fun actualizarTextoCategoria() {
+        binding.tvCategoriaSeleccionada.text = when {
+            categoriaSeleccionada == null -> "Sin categoría"
+            categoriaSeleccionada!!.id == 0 -> "Sin categoría"
+            else -> categoriaSeleccionada!!.nombre
         }
     }
 
@@ -160,7 +223,7 @@ class OperacionProductoActivity : AppCompatActivity() {
                 precio = binding.etPrecio.text.toString().toDouble(),
                 stock = binding.etStock.text.toString().toInt(),
                 url = imageUrl,
-                idCategoria = 0,
+                idCategoria = categoriaSeleccionada?.id ?: 0, // ✨ Asignar categoría
                 activo = true
             )
 
@@ -216,7 +279,9 @@ class OperacionProductoActivity : AppCompatActivity() {
         clearAllEditTexts(binding.root)
         selectedImageUri = null
         imageUrl = ""
+        categoriaSeleccionada = null
         binding.ivPreview.isVisible = false
+        actualizarTextoCategoria()
     }
 
     private fun clearAllEditTexts(view: View) {

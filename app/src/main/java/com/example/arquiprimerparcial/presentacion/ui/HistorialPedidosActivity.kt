@@ -16,14 +16,51 @@ import com.example.arquiprimerparcial.presentacion.common.makeCall
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class HistorialPedidosActivity : AppCompatActivity() {
+class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickListener {
+
+    private lateinit var binding: ActivityHistorialPedidosBinding
+    private lateinit var pedidoAdapter: PedidoAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityHistorialPedidosBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        initToolbar()
+        initUI()
+        cargarTodo()
+        cargarResumen()
+    }
+
+    private fun initToolbar() {
+        binding.includeToolbar.toolbar.apply {
+            setSupportActionBar(this)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            subtitle = "Historial de Pedidos"
+            navigationIcon = AppCompatResources.getDrawable(
+                this@HistorialPedidosActivity,
+                R.drawable.baseline_arrow_back_24
+            )
+            setNavigationOnClickListener {
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
+        binding.includeToolbar.ibAccion.isVisible = false
+    }
+
+    private fun initUI() {
+        pedidoAdapter = PedidoAdapter(this)
+        binding.rvPedidos.apply {
+            layoutManager = LinearLayoutManager(this@HistorialPedidosActivity)
+            adapter = pedidoAdapter
+        }
+    }
 
     private fun cargarTodo() = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
-        // ✅ SOLO UNA llamada al servicio específico
         makeCall {
-            HistorialServicio().obtenerHistorialCompleto()
+            PedidoServicio.obtenerPedidos()
         }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
@@ -35,7 +72,9 @@ class HistorialPedidosActivity : AppCompatActivity() {
 
     private fun cargarResumen() = lifecycleScope.launch {
         makeCall {
-            HistorialServicio().obtenerResumenDelDia()
+            val ventas = PedidoServicio.obtenerVentasDelDia()
+            val totalPedidos = PedidoServicio.obtenerTotalPedidosHoy()
+            Pair(ventas, totalPedidos)
         }.let { result ->
             when (result) {
                 is UiState.Success -> {
@@ -43,9 +82,30 @@ class HistorialPedidosActivity : AppCompatActivity() {
                     binding.tvVentasDelDia.text = "S/ ${"%.2f".format(ventas)}"
                     binding.tvTotalPedidos.text = "$totalPedidos pedidos"
                 }
-                is UiState.Error -> { /* manejar error */ }
+                is UiState.Error -> { /* ignorar error del resumen */ }
             }
         }
+    }
+
+    override fun clickVerDetalle(pedido: PedidoModelo) {
+        // Mostrar detalles del pedido
+        val mensaje = buildString {
+            append("📦 Pedido #${pedido.id}\n\n")
+            append("👤 Cliente: ${pedido.nombreCliente}\n")
+            append("📅 Fecha: ${pedido.fechaPedido}\n\n")
+            append("🛒 Productos:\n")
+            pedido.detalles.forEach { detalle ->
+                append("• ${detalle.nombreProducto}\n")
+                append("  ${detalle.cantidad} x S/ ${detalle.formatearPrecioUnitario()} = S/ ${detalle.formatearSubtotal()}\n")
+            }
+            append("\n💰 Total: S/ ${pedido.formatearTotal()}")
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Detalle del Pedido")
+            .setMessage(mensaje)
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     override fun clickEliminar(pedido: PedidoModelo) {
@@ -54,13 +114,22 @@ class HistorialPedidosActivity : AppCompatActivity() {
             .setMessage("¿Está seguro de eliminar el pedido #${pedido.id}?")
             .setPositiveButton("Eliminar") { _, _ ->
                 lifecycleScope.launch {
+                    binding.progressBar.isVisible = true
+
                     makeCall {
-                        HistorialServicio().eliminarPedidoDelHistorial(pedido.id)
+                        PedidoServicio.eliminarPedido(pedido.id)
                     }.let { result ->
+                        binding.progressBar.isVisible = false
+
                         when (result) {
-                            is UiState.Success -> if (result.data) {
-                                cargarTodo() // Recargar
-                                cargarResumen()
+                            is UiState.Success -> {
+                                if (result.data.isSuccess) {
+                                    mostrarExito("Pedido eliminado correctamente")
+                                    cargarTodo()
+                                    cargarResumen()
+                                } else {
+                                    mostrarError(result.data.exceptionOrNull()?.message ?: "Error al eliminar")
+                                }
                             }
                             is UiState.Error -> mostrarError(result.message)
                         }
@@ -68,6 +137,22 @@ class HistorialPedidosActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun mostrarError(mensaje: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Error")
+            .setMessage(mensaje)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun mostrarExito(mensaje: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Éxito")
+            .setMessage(mensaje)
+            .setPositiveButton("OK", null)
             .show()
     }
 }

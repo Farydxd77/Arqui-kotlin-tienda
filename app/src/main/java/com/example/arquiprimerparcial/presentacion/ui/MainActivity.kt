@@ -45,8 +45,9 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        binding.btnServidorApi.setOnClickListener {
-            startActivity(Intent(this, ServidorActivity::class.java))
+        // ✨ NUEVO: Botón para gestionar categorías
+        binding.btnCategorias.setOnClickListener {
+            startActivity(Intent(this, CategoriaActivity::class.java))
         }
 
         binding.btnCrearPedido.setOnClickListener {

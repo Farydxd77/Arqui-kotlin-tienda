@@ -106,7 +106,7 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Campos existentes -->
+            <!-- Campos básicos -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_descripcion"
                 android:layout_width="0dp"
@@ -143,6 +143,60 @@
                     android:minLines="2" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- NUEVO: Card Categoría -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_categoria"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/til_codigo_barra">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_titulo_categoria"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🏷️ Categoría"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tv_categoria_seleccionada"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@android:drawable/editbox_background"
+                        android:padding="12dp"
+                        android:text="Sin categoría"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toStartOf="@+id/btn_seleccionar_categoria"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tv_titulo_categoria" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_seleccionar_categoria"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:icon="@android:drawable/ic_menu_sort_by_size"
+                        app:layout_constraintBottom_toBottomOf="@+id/tv_categoria_seleccionada"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tv_categoria_seleccionada" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_precio"
                 android:layout_width="0dp"
@@ -151,7 +205,7 @@
                 android:hint="Precio (S/)"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/til_codigo_barra"
+                app:layout_constraintTop_toBottomOf="@+id/card_categoria"
                 app:prefixText="S/ ">
 
                 <com.google.android.material.textfield.TextInputEditText
