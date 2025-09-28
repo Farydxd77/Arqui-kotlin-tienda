@@ -143,7 +143,7 @@ class CrearPedidoActivity : AppCompatActivity(),
 
     private fun cargarProductos(filtro: String = "") = lifecycleScope.launch {
         binding.progressBar.isVisible = true
-        makeCall { ProductoServicio.obtenerProductos(filtro) }.let { result ->
+        makeCall { ProductoServicio.listarProductos(filtro) }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
                 is UiState.Error -> mostrarError(result.message)

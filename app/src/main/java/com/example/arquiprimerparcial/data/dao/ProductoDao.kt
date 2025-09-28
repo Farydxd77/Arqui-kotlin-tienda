@@ -5,7 +5,7 @@ import com.example.arquiprimerparcial.data.entidad.ProductoEntidad
 
 object ProductoDao {
 
-    fun listar(filtro: String): List<ProductoEntidad> {
+    fun listarProducto(filtro: String): List<ProductoEntidad> {
         val lista = mutableListOf<ProductoEntidad>()
 
         PostgresqlConexion.getConexion().use { conexion ->
@@ -74,7 +74,7 @@ object ProductoDao {
         return lista
     }
 
-    fun insertar(producto: ProductoEntidad): Boolean {
+    fun crearProducto(producto: ProductoEntidad): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 val sql = """
@@ -102,7 +102,7 @@ object ProductoDao {
         }
     }
 
-    fun actualizar(producto: ProductoEntidad): Boolean {
+    fun actualizarProducto(producto: ProductoEntidad): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 val sql = """
@@ -133,7 +133,7 @@ object ProductoDao {
         }
     }
 
-    fun eliminar(id: Int): Boolean {
+    fun desactivarProducto(id: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
                 // Eliminación lógica: marcar como inactivo

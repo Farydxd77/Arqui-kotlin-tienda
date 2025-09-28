@@ -6,7 +6,7 @@ import com.example.arquiprimerparcial.negocio.modelo.CategoriaModelo
 
 object CategoriaServicio {
 
-    fun obtenerCategorias(): List<CategoriaModelo> {
+    fun listarCategorias(): List<CategoriaModelo> {
         return CategoriaDao.listar().map { entidad ->
             CategoriaModelo(
                 id = entidad.id,

@@ -99,7 +99,7 @@ class OperacionProductoActivity : AppCompatActivity() {
     private fun cargarCategorias() = lifecycleScope.launch {
         try {
             val result = withContext(Dispatchers.IO) {
-                CategoriaServicio.obtenerCategorias()
+                CategoriaServicio.listarCategorias()
             }
 
             listaCategorias.clear()
@@ -229,7 +229,7 @@ class OperacionProductoActivity : AppCompatActivity() {
 
             val result = withContext(Dispatchers.IO) {
                 try {
-                    UiState.Success(ProductoServicio.guardarProducto(producto))
+                    UiState.Success(ProductoServicio.crearProductoactualizar(producto))
                 } catch (e: Exception) {
                     UiState.Error(e.message.orEmpty())
                 }

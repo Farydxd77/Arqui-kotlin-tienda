@@ -114,7 +114,7 @@ class CategoriaActivity : AppCompatActivity(), CategoriaAdapter.IOnClickListener
         val result = withContext(Dispatchers.IO) {
             try {
                 if (filtro.isEmpty()) {
-                    UiState.Success(CategoriaServicio.obtenerCategorias())
+                    UiState.Success(CategoriaServicio.listarCategorias())
                 } else {
                     UiState.Success(CategoriaServicio.obtenerCategoriasConFiltro(filtro))
                 }

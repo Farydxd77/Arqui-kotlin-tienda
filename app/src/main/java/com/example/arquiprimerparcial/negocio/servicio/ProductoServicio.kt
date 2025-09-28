@@ -7,8 +7,8 @@ import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 
 object ProductoServicio {
 
-    fun obtenerProductos(filtro: String = ""): List<ProductoModelo> {
-        return ProductoDao.listar(filtro).map { entidad ->
+    fun listarProductos(filtro: String = ""): List<ProductoModelo> {
+        return ProductoDao.listarProducto(filtro).map { entidad ->
             val categoria = if (entidad.id_categoria > 0) {
                 CategoriaDao.obtenerPorId(entidad.id_categoria)
             } else null
@@ -65,7 +65,7 @@ object ProductoServicio {
         }
     }
 
-    fun guardarProducto(producto: ProductoModelo): Result<Boolean> {
+    fun crearProductoactualizar(producto: ProductoModelo): Result<Boolean> {
         return try {
             // Validaciones de negocio
             if (!producto.esValido()) {
@@ -104,9 +104,9 @@ object ProductoServicio {
             )
 
             val resultado = if (producto.id == 0) {
-                ProductoDao.insertar(entidad)
+                ProductoDao.crearProducto(entidad)
             } else {
-                ProductoDao.actualizar(entidad)
+                ProductoDao.actualizarProducto(entidad)
             }
 
             if (resultado) {
@@ -119,13 +119,13 @@ object ProductoServicio {
         }
     }
 
-    fun eliminarProducto(id: Int): Result<Boolean> {
+    fun desactivarProducto(id: Int): Result<Boolean> {
         return try {
             if (id <= 0) {
                 return Result.failure(Exception("ID de producto inválido"))
             }
 
-            val resultado = ProductoDao.eliminar(id) // Eliminación lógica
+            val resultado = ProductoDao.desactivarProducto(id) // Eliminación lógica
             if (resultado) {
                 Result.success(true)
             } else {
@@ -144,7 +144,7 @@ object ProductoServicio {
             }
 
             producto.activo = true
-            val resultado = ProductoDao.actualizar(producto)
+            val resultado = ProductoDao.actualizarProducto(producto)
 
             if (resultado) {
                 Result.success(true)
@@ -219,6 +219,6 @@ object ProductoServicio {
     }
 
     fun buscarProductos(query: String): List<ProductoModelo> {
-        return obtenerProductos(query)
+        return listarProductos(query)
     }
 }
