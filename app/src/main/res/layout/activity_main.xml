@@ -60,18 +60,40 @@
 
             </LinearLayout>
 
-            <!-- Segunda fila: Categorías -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_categorias"
+            <!-- Segunda fila: Gestión -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="@color/secondary"
-                android:drawableLeft="@android:drawable/ic_menu_sort_by_size"
-                android:drawableTint="@color/white"
-                android:text="🏷️ Gestionar Categorías"
-                android:textColor="@color/white"
-                app:cornerRadius="12dp" />
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_gestionar_productos"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/primaryLight"
+                    android:drawableLeft="@android:drawable/ic_menu_manage"
+                    android:drawableTint="@color/white"
+                    android:text="📦 Gestionar Productos"
+                    android:textColor="@color/white"
+                    app:cornerRadius="12dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_categorias"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/secondary"
+                    android:drawableLeft="@android:drawable/ic_menu_sort_by_size"
+                    android:drawableTint="@color/white"
+                    android:text="🏷️ Categorías"
+                    android:textColor="@color/white"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -97,7 +119,19 @@
                 android:hint="Buscar productos..." />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Lista de Productos -->
+        <!-- Lista de Productos (Vista previa en el dashboard) -->
+        <TextView
+            android:id="@+id/tv_titulo_productos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:text="📦 Productos Recientes"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/til_buscar" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_lista"
             android:layout_width="0dp"
@@ -108,7 +142,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/til_buscar" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_titulo_productos" />
 
         <ProgressBar
             android:id="@+id/progressBar"

@@ -21,6 +21,9 @@
         <activity
             android:name=".presentacion.ui.CategoriaActivity"
             android:exported="false" />
+        <activity
+            android:name=".presentacion.ui.ProductoActivity"
+            android:exported="false" />
 
         <activity
             android:name=".presentacion.ui.OperacionCategoriaActivity"

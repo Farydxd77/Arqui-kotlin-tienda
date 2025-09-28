@@ -8,10 +8,12 @@ import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.arquiprimerparcial.databinding.ActivityMainBinding
+import com.example.arquiprimerparcial.R
+import com.example.arquiprimerparcial.databinding.ActivityProductoBinding
 import com.example.arquiprimerparcial.negocio.modelo.ProductoModelo
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
 import com.example.arquiprimerparcial.presentacion.adapter.ProductoAdapter
@@ -21,54 +23,68 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
-    private lateinit var binding: ActivityMainBinding
+class ProductoActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
+    private lateinit var binding: ActivityProductoBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityProductoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initToolbar()
         initListener()
         cargarProductos("")
     }
 
     override fun onResume() {
         super.onResume()
-        if (!existeCambio) return
-        existeCambio = false
         cargarProductos(binding.etBuscar.text.toString().trim())
     }
 
+    private fun initToolbar() {
+        binding.includeToolbar.toolbar.apply {
+            setSupportActionBar(this)
+            supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            subtitle = "Gestión de Productos"
+            navigationIcon = AppCompatResources.getDrawable(
+                this@ProductoActivity,
+                R.drawable.baseline_arrow_back_24
+            )
+            setNavigationOnClickListener {
+                onBackPressedDispatcher.onBackPressed()
+            }
+        }
+
+        // ✅ ASEGURARSE QUE EL BOTÓN + ESTÉ VISIBLE
+        binding.includeToolbar.ibAccion.apply {
+            isVisible = true
+            setImageResource(R.drawable.baseline_add_24)
+        }
+    }
+
     private fun initListener() {
-        // Botón para crear nuevo producto
+        // Botón del toolbar para crear nuevo producto
         binding.includeToolbar.ibAccion.setOnClickListener {
             startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        // ✨ NUEVO: Botón para gestionar productos
-        binding.btnGestionarProductos.setOnClickListener {
-            startActivity(Intent(this, ProductoActivity::class.java))
+        // ✅ BOTÓN GRANDE para crear nuevo producto
+        binding.btnCrearProductoGrande.setOnClickListener {
+            startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        // Botón para gestionar categorías
-        binding.btnCategorias.setOnClickListener {
-            startActivity(Intent(this, CategoriaActivity::class.java))
+        // ✅ FLOATING ACTION BUTTON para crear nuevo producto
+        binding.fabCrearProducto.setOnClickListener {
+            startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        binding.btnCrearPedido.setOnClickListener {
-            startActivity(Intent(this, CrearPedidoActivity::class.java))
-        }
-
-        binding.btnVerPedidos.setOnClickListener {
-            startActivity(Intent(this, HistorialPedidosActivity::class.java))
-        }
-
+        // RecyclerView
         binding.rvLista.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = ProductoAdapter(this@MainActivity)
+            layoutManager = LinearLayoutManager(this@ProductoActivity)
+            adapter = ProductoAdapter(this@ProductoActivity)
         }
 
+        // Búsqueda
         binding.tilBuscar.setEndIconOnClickListener {
             cargarProductos(binding.etBuscar.text.toString().trim())
         }
@@ -101,12 +117,12 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
 
     override fun clickEliminar(producto: ProductoModelo) {
         MaterialAlertDialogBuilder(this).apply {
-            setTitle("Eliminar")
-            setMessage("¿Desea eliminar el registro: ${producto.nombre}?")
+            setTitle("Desactivar Producto")
+            setMessage("¿Desea desactivar el producto: ${producto.nombre}?\n\nNota: El producto quedará oculto pero se conservará en el historial.")
             setCancelable(false)
-            setNegativeButton("NO") { dialog, _ -> dialog.dismiss() }
-            setPositiveButton("SI") { dialog, _ ->
-                eliminarProducto(producto.id)
+            setNegativeButton("CANCELAR") { dialog, _ -> dialog.dismiss() }
+            setPositiveButton("DESACTIVAR") { dialog, _ ->
+                desactivarProducto(producto.id)
                 dialog.dismiss()
             }
         }.create().show()
@@ -129,11 +145,20 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             is UiState.Error -> mostrarError(result.message)
             is UiState.Success -> {
                 (binding.rvLista.adapter as ProductoAdapter).setList(result.data)
+
+                // Mostrar mensaje si está vacío
+                if (result.data.isEmpty()) {
+                    if (filtro.isEmpty()) {
+                        mostrarInfo("No hay productos registrados")
+                    } else {
+                        mostrarInfo("No se encontraron productos con el filtro: '$filtro'")
+                    }
+                }
             }
         }
     }
 
-    private fun eliminarProducto(id: Int) = lifecycleScope.launch {
+    private fun desactivarProducto(id: Int) = lifecycleScope.launch {
         binding.progressBar.isVisible = true
 
         val result = withContext(Dispatchers.IO) {
@@ -150,10 +175,10 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             is UiState.Error -> mostrarError(result.message)
             is UiState.Success -> {
                 if (result.data.isSuccess) {
-                    Toast.makeText(this@MainActivity, "Registro eliminado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ProductoActivity, "✅ Producto desactivado", Toast.LENGTH_SHORT).show()
                     cargarProductos(binding.etBuscar.text.toString().trim())
                 } else {
-                    mostrarError("Error al eliminar el producto")
+                    mostrarError(result.data.exceptionOrNull()?.message ?: "Error al desactivar el producto")
                 }
             }
         }
@@ -167,12 +192,16 @@ class MainActivity : AppCompatActivity(), ProductoAdapter.IOnClickListener {
             .show()
     }
 
+    private fun mostrarInfo(mensaje: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Información")
+            .setMessage(mensaje)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
     private fun ocultarTeclado() {
         val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.root.windowToken, 0)
-    }
-
-    companion object {
-        var existeCambio = false
     }
 }
