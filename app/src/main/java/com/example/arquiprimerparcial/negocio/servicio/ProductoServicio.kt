@@ -5,7 +5,32 @@ import com.example.arquiprimerparcial.data.dao.ProductoDao
 
 object ProductoServicio {
 
-    // Retorna lista de arrays: [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre]
+    fun listarProductosPrimitivos(filtro: String = ""): List<Map<String, Any>> {
+        return try {
+            val productosArray = ProductoDao.listarProducto(filtro)
+
+            val resultado = mutableListOf<Map<String, Any>>()
+
+            for (producto in productosArray) {
+                resultado.add(mapOf(
+                    "id" to (producto[0] as Int),
+                    "nombre" to (producto[1] as String),
+                    "descripcion" to (producto[2] as String),
+                    "url" to (producto[3] as String),
+                    "precio" to (producto[4] as Double),
+                    "stock" to (producto[5] as Int),
+                    "idCategoria" to (producto[6] as Int),
+                    "activo" to (producto[7] as Boolean),
+                    "categoriaNombre" to (producto[8] as String)
+                ))
+            }
+
+            resultado
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     fun listarProductos(filtro: String = ""): List<Array<Any>> {
         return ProductoDao.listarProducto(filtro)
     }
@@ -14,7 +39,6 @@ object ProductoServicio {
         return ProductoDao.listarPorCategoria(idCategoria)
     }
 
-    // Retorna array [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre] o null
     fun obtenerProductoPorId(id: Int): Array<Any>? {
         return ProductoDao.obtenerPorId(id)
     }
@@ -22,7 +46,6 @@ object ProductoServicio {
     fun crearProductoActualizar(id: Int, nombre: String, descripcion: String, url: String,
                                 precio: Double, stock: Int, idCategoria: Int, activo: Boolean = true): Result<Boolean> {
         return try {
-            // Validaciones de negocio primitivas
             if (nombre.isBlank()) {
                 return Result.failure(Exception("El nombre del producto es obligatorio"))
             }
@@ -47,12 +70,10 @@ object ProductoServicio {
                 return Result.failure(Exception("La descripción no puede exceder 500 caracteres"))
             }
 
-            // Validar URL si no está vacía
             if (url.isNotEmpty() && !validarUrl(url)) {
                 return Result.failure(Exception("La URL debe comenzar con http:// o https://"))
             }
 
-            // Validar que la categoría existe si se especifica
             if (idCategoria > 0) {
                 val categoria = CategoriaDao.obtenerPorId(idCategoria)
                 if (categoria == null) {
@@ -61,13 +82,11 @@ object ProductoServicio {
             }
 
             val resultado = if (id == 0) {
-                // Crear nuevo producto
                 ProductoDao.crearProducto(
                     nombre.trim(), descripcion.trim(), url.trim(),
                     precio, stock, idCategoria, activo
                 )
             } else {
-                // Actualizar producto existente
                 ProductoDao.actualizarProducto(
                     id, nombre.trim(), descripcion.trim(), url.trim(),
                     precio, stock, idCategoria, activo
@@ -107,13 +126,11 @@ object ProductoServicio {
                 return Result.failure(Exception("ID de producto inválido"))
             }
 
-            // Obtener producto actual
             val productoArray = ProductoDao.obtenerPorId(id)
             if (productoArray == null) {
                 return Result.failure(Exception("Producto no encontrado"))
             }
 
-            // Actualizar solo el estado activo
             val resultado = ProductoDao.actualizarProducto(
                 id = productoArray[0] as Int,
                 nombre = productoArray[1] as String,
@@ -156,7 +173,6 @@ object ProductoServicio {
         return ProductoDao.listarStockBajo(limite)
     }
 
-    // Validaciones primitivas
     fun validarPrecio(precio: String): Boolean {
         return try {
             val precioDouble = precio.toDouble()
@@ -176,7 +192,7 @@ object ProductoServicio {
     }
 
     fun validarUrl(url: String): Boolean {
-        if (url.isBlank()) return true // URL es opcional
+        if (url.isBlank()) return true
         return url.startsWith("http://") || url.startsWith("https://")
     }
 
@@ -192,7 +208,6 @@ object ProductoServicio {
         return listarProductos(query)
     }
 
-    // Utilidades para trabajar con arrays de productos
     fun calcularValorInventario(productoArray: Array<Any>): Double {
         val precio = productoArray[4] as Double
         val stock = productoArray[5] as Int
@@ -211,6 +226,21 @@ object ProductoServicio {
 
     fun sinStock(productoArray: Array<Any>): Boolean {
         val stock = productoArray[5] as Int
+        return stock == 0
+    }
+
+    fun tieneStockPrimitivo(producto: Map<String, Any>): Boolean {
+        val stock = producto["stock"] as Int
+        return stock > 0
+    }
+
+    fun stockBajoPrimitivo(producto: Map<String, Any>, limite: Int = 5): Boolean {
+        val stock = producto["stock"] as Int
+        return stock <= limite && stock > 0
+    }
+
+    fun sinStockPrimitivo(producto: Map<String, Any>): Boolean {
+        val stock = producto["stock"] as Int
         return stock == 0
     }
 

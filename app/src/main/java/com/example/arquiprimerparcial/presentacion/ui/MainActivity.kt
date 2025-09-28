@@ -50,14 +50,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun initAdapter() {
         adapter = ProductoAdapterIntegrado(
-            onClickEditar = { productoArray ->
-                val id = productoArray[0] as Int
-                val nombre = productoArray[1] as String
-                val descripcion = productoArray[2] as String
-                val url = productoArray[3] as String
-                val precio = productoArray[4] as Double
-                val stock = productoArray[5] as Int
-                val idCategoria = productoArray[6] as Int
+            onClickEditar = { productoMap ->
+                val id = productoMap["id"] as Int
+                val nombre = productoMap["nombre"] as String
+                val descripcion = productoMap["descripcion"] as String
+                val url = productoMap["url"] as String
+                val precio = productoMap["precio"] as Double
+                val stock = productoMap["stock"] as Int
+                val idCategoria = productoMap["idCategoria"] as Int
 
                 startActivity(
                     Intent(this, OperacionProductoActivity::class.java).apply {
@@ -71,9 +71,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
             },
-            onClickEliminar = { productoArray ->
-                val id = productoArray[0] as Int
-                val nombre = productoArray[1] as String
+            onClickEliminar = { productoMap ->
+                val id = productoMap["id"] as Int
+                val nombre = productoMap["nombre"] as String
 
                 MaterialAlertDialogBuilder(this).apply {
                     setTitle("Eliminar")
@@ -95,17 +95,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initListener() {
-        // Botón para crear nuevo producto
         binding.includeToolbar.ibAccion.setOnClickListener {
             startActivity(Intent(this, OperacionProductoActivity::class.java))
         }
 
-        // Botón para gestionar productos
         binding.btnGestionarProductos.setOnClickListener {
             startActivity(Intent(this, ProductoActivity::class.java))
         }
 
-        // Botón para gestionar categorías
         binding.btnCategorias.setOnClickListener {
             startActivity(Intent(this, CategoriaActivity::class.java))
         }
@@ -139,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(ProductoServicio.listarProductos(filtro))
+                UiState.Success(ProductoServicio.listarProductosPrimitivos(filtro))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
@@ -198,32 +195,32 @@ class MainActivity : AppCompatActivity() {
         var existeCambio = false
     }
 
-    // ================================
-    // ADAPTADOR INTEGRADO DIRECTAMENTE
-    // ================================
     private class ProductoAdapterIntegrado(
-        private val onClickEditar: (Array<Any>) -> Unit,
-        private val onClickEliminar: (Array<Any>) -> Unit
+        private val onClickEditar: (Map<String, Any>) -> Unit,
+        private val onClickEliminar: (Map<String, Any>) -> Unit
     ) : RecyclerView.Adapter<ProductoAdapterIntegrado.ProductoViewHolder>() {
 
-        private var lista = emptyList<Array<Any>>()
+        private var lista = emptyList<Map<String, Any>>()
 
         inner class ProductoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             private val tvTitulo: TextView = itemView.findViewById(R.id.tv_titulo)
+            private val tvNombre: TextView = itemView.findViewById(R.id.tv_nombre)
             private val tvCategoria: TextView = itemView.findViewById(R.id.tv_categoria)
             private val tvStock: TextView = itemView.findViewById(R.id.tv_stock)
             private val tvPrecio: TextView = itemView.findViewById(R.id.tv_precio)
             private val ibEditar: ImageButton = itemView.findViewById(R.id.ib_editar)
             private val ibEliminar: ImageButton = itemView.findViewById(R.id.ib_eliminar)
 
-            fun enlazar(productoArray: Array<Any>) {
-                val nombre = productoArray[1] as String
-                val precio = productoArray[4] as Double
-                val stock = productoArray[5] as Int
-                val idCategoria = productoArray[6] as Int
-                val categoriaNombre = productoArray[8] as String
+            fun enlazar(productoMap: Map<String, Any>) {
+                val nombre = productoMap["nombre"] as String
+                val precio = productoMap["precio"] as Double
+                val stock = productoMap["stock"] as Int
+                val idCategoria = productoMap["idCategoria"] as Int
+                val categoriaNombre = productoMap["categoriaNombre"] as String
 
                 tvTitulo.text = nombre
+                tvNombre.text = nombre
+
                 tvCategoria.text = when {
                     categoriaNombre.isNotEmpty() -> "🏷️ $categoriaNombre"
                     idCategoria > 0 -> "🏷️ Categoría ID: $idCategoria"
@@ -232,13 +229,12 @@ class MainActivity : AppCompatActivity() {
                 tvStock.text = "Stock: $stock"
                 tvPrecio.text = "S/ ${ProductoServicio.formatearPrecio(precio)}"
 
-                // Color según estado del stock
                 when {
-                    ProductoServicio.sinStock(productoArray) -> {
+                    ProductoServicio.sinStockPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.RED)
                         itemView.alpha = 0.6f
                     }
-                    ProductoServicio.stockBajo(productoArray) -> {
+                    ProductoServicio.stockBajoPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.parseColor("#FF9800"))
                         itemView.alpha = 0.8f
                     }
@@ -248,11 +244,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                ibEditar.setOnClickListener { onClickEditar(productoArray) }
-                ibEliminar.setOnClickListener { onClickEliminar(productoArray) }
-
-                // Click en toda la card
-                itemView.setOnClickListener { onClickEditar(productoArray) }
+                ibEditar.setOnClickListener { onClickEditar(productoMap) }
+                ibEliminar.setOnClickListener { onClickEliminar(productoMap) }
+                itemView.setOnClickListener { onClickEditar(productoMap) }
             }
         }
 
@@ -268,7 +262,7 @@ class MainActivity : AppCompatActivity() {
             holder.enlazar(lista[position])
         }
 
-        fun setList(listaProducto: List<Array<Any>>) {
+        fun setList(listaProducto: List<Map<String, Any>>) {
             this.lista = listaProducto
             notifyDataSetChanged()
         }

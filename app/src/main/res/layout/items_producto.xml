@@ -23,14 +23,29 @@
             android:layout_height="match_parent"
             android:padding="16dp">
 
+            <!-- TextView principal para el nombre -->
+            <TextView
+                android:id="@+id/tv_nombre"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Nombre del Producto"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/ib_editar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- TextView alternativo para compatibilidad -->
             <TextView
                 android:id="@+id/tv_titulo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:text="TITULO"
+                android:text="Título del Producto"
                 android:textSize="18sp"
                 android:textStyle="bold"
+                android:visibility="gone"
                 app:layout_constraintEnd_toStartOf="@+id/ib_editar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -40,12 +55,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Categoría"
+                android:text="🏷️ Categoría"
                 android:textColor="@color/primary"
                 android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="@+id/tv_titulo"
+                app:layout_constraintEnd_toEndOf="@+id/tv_nombre"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_titulo" />
+                app:layout_constraintTop_toBottomOf="@+id/tv_nombre" />
 
             <TextView
                 android:id="@+id/tv_stock"
@@ -63,14 +78,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:layout_marginBottom="8dp"
                 android:text="S/ 0.00"
                 android:textColor="@color/accent"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tv_stock" />
+
+            <!-- Botón para seleccionar/agregar producto -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_seleccionar"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="Agregar"
+                android:textSize="12sp"
+                app:cornerRadius="20dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_precio" />
 
             <ImageButton
                 android:id="@+id/ib_eliminar"
@@ -78,9 +105,9 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_delete"
-                app:tint="@color/secondary"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/secondary" />
 
             <ImageButton
                 android:id="@+id/ib_editar"
@@ -89,9 +116,9 @@
                 android:layout_marginEnd="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_edit"
-                app:tint="@color/primaryLight"
                 app:layout_constraintEnd_toStartOf="@+id/ib_eliminar"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/primaryLight" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

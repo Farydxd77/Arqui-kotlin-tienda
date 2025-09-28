@@ -24,7 +24,6 @@ class CrearPedidoActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCrearPedidoBinding
 
-    // ✅ SOLO PRIMITIVOS
     private var listaProductos = mutableListOf<Map<String, Any>>()
     private var detallesPedido = mutableListOf<Map<String, Any>>()
     private var totalPedido = 0.0
@@ -58,13 +57,11 @@ class CrearPedidoActivity : AppCompatActivity() {
     }
 
     private fun initUI() {
-        // Configurar RecyclerView de productos
         binding.rvProductos.apply {
             layoutManager = LinearLayoutManager(this@CrearPedidoActivity)
             adapter = ProductoAdapter()
         }
 
-        // Configurar RecyclerView de detalles
         binding.rvDetallesPedido.apply {
             layoutManager = LinearLayoutManager(this@CrearPedidoActivity)
             adapter = DetalleAdapter()
@@ -93,7 +90,6 @@ class CrearPedidoActivity : AppCompatActivity() {
         })
     }
 
-    // ✅ ADAPTADOR INTERNO PARA PRODUCTOS
     inner class ProductoAdapter : RecyclerView.Adapter<ProductoAdapter.ProductoViewHolder>() {
 
         inner class ProductoViewHolder(private val binding: ItemsProductoBinding) :
@@ -133,7 +129,6 @@ class CrearPedidoActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ ADAPTADOR INTERNO PARA DETALLES
     inner class DetalleAdapter : RecyclerView.Adapter<DetalleAdapter.DetalleViewHolder>() {
 
         inner class DetalleViewHolder(private val binding: ItemsPedidoDetalleBinding) :
@@ -213,15 +208,12 @@ class CrearPedidoActivity : AppCompatActivity() {
         val nombre = producto["nombre"] as String
         val precio = producto["precio"] as Double
 
-        // Buscar si ya existe el producto
         val detalleExistente = detallesPedido.find { it["idProducto"] == idProducto }
 
         if (detalleExistente != null) {
-            // Actualizar cantidad existente
             val cantidadActual = detalleExistente["cantidad"] as Int
             modificarCantidad(idProducto, cantidadActual + cantidad)
         } else {
-            // Agregar nuevo detalle
             val detalle = mapOf(
                 "idProducto" to idProducto,
                 "nombreProducto" to nombre,
@@ -254,21 +246,13 @@ class CrearPedidoActivity : AppCompatActivity() {
 
     private fun cargarProductos(filtro: String = "") = lifecycleScope.launch {
         binding.progressBar.isVisible = true
-        makeCall { ProductoServicio.listarProductos(filtro) }.let { result ->
+        makeCall { ProductoServicio.listarProductosPrimitivos(filtro) }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
                 is UiState.Error -> mostrarError(result.message)
                 is UiState.Success -> {
-                    // Convertir modelos a primitivos
                     listaProductos.clear()
-                    result.data.forEach { producto ->
-                        listaProductos.add(mapOf(
-                            "id" to producto.id,
-                            "nombre" to producto.nombre,
-                            "precio" to producto.precio,
-                            "stock" to producto.stock
-                        ))
-                    }
+                    listaProductos.addAll(result.data)
                     binding.rvProductos.adapter?.notifyDataSetChanged()
                 }
             }
@@ -281,8 +265,13 @@ class CrearPedidoActivity : AppCompatActivity() {
     }
 
     private fun actualizarResumen() {
-        totalPedido = detallesPedido.sumOf { it["subtotal"] as Double }
-        cantidadTotal = detallesPedido.sumOf { it["cantidad"] as Int }
+        totalPedido = 0.0
+        cantidadTotal = 0
+
+        for (detalle in detallesPedido) {
+            totalPedido += (detalle["subtotal"] as Double)
+            cantidadTotal += (detalle["cantidad"] as Int)
+        }
 
         binding.tvTotalPedido.text = "Total: S/ ${"%.2f".format(totalPedido)}"
         binding.tvCantidadProductos.text = "$cantidadTotal productos"
@@ -309,7 +298,6 @@ class CrearPedidoActivity : AppCompatActivity() {
         binding.progressBar.isVisible = true
         val nombreCliente = binding.etNombreCliente.text.toString().trim()
 
-        // Crear estructura primitiva para el servicio
         val pedidoData = mapOf(
             "nombreCliente" to nombreCliente,
             "detalles" to detallesPedido,

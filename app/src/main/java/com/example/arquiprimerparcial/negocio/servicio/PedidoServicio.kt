@@ -7,11 +7,28 @@ import java.sql.Timestamp
 
 object PedidoServicio {
 
-    // Crear pedido con parámetros primitivos
-    // detalles: Lista de arrays [idProducto, cantidad, precioUnitario]
+    fun crearPedidoPrimitivo(pedidoData: Map<String, Any>): Result<Int> {
+        return try {
+            val nombreCliente = pedidoData["nombreCliente"] as String
+            @Suppress("UNCHECKED_CAST")
+            val detalles = pedidoData["detalles"] as List<Map<String, Any>>
+
+            val detallesArray = detalles.map { detalle ->
+                arrayOf(
+                    detalle["idProducto"] as Int,
+                    detalle["cantidad"] as Int,
+                    detalle["precioUnitario"] as Double
+                )
+            }
+
+            crearPedido(nombreCliente, detallesArray)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun crearPedido(nombreCliente: String, detalles: List<Array<Any>>): Result<Int> {
         return try {
-            // Validaciones primitivas
             if (nombreCliente.isBlank()) {
                 return Result.failure(Exception("El nombre del cliente es requerido"))
             }
@@ -24,7 +41,7 @@ object PedidoServicio {
                 return Result.failure(Exception("El pedido debe tener al menos un producto"))
             }
 
-            // Verificar stock de todos los productos
+            // Verificar stock
             for (detalle in detalles) {
                 val idProducto = detalle[0] as Int
                 val cantidad = detalle[1] as Int
@@ -42,10 +59,8 @@ object PedidoServicio {
                 }
             }
 
-            // Calcular total
             val total = calcularTotalDetalles(detalles)
 
-            // Crear pedido en BD
             val idPedido = PedidoDao.insertar(
                 nombreCliente = nombreCliente.trim(),
                 fechaPedido = Timestamp(System.currentTimeMillis()),
@@ -56,13 +71,12 @@ object PedidoServicio {
                 return Result.failure(Exception("Error al crear el pedido"))
             }
 
-            // Crear detalles del pedido
             val detallesParaInsertar = detalles.map { detalle ->
                 arrayOf(
-                    idPedido,           // id_pedido
-                    detalle[0] as Int,  // id_producto
-                    detalle[1] as Int,  // cantidad
-                    detalle[2] as Double // precio_unitario
+                    idPedido,
+                    detalle[0] as Int,
+                    detalle[1] as Int,
+                    detalle[2] as Double
                 )
             }
 
@@ -71,7 +85,7 @@ object PedidoServicio {
                 return Result.failure(Exception("Error al guardar los detalles del pedido"))
             }
 
-            // Actualizar stock de productos
+            // Actualizar stock
             for (detalle in detalles) {
                 val idProducto = detalle[0] as Int
                 val cantidad = detalle[1] as Int
@@ -89,17 +103,60 @@ object PedidoServicio {
         }
     }
 
-    // Retorna lista de arrays: [id, nombre_cliente, fecha_pedido, total]
+    fun obtenerPedidosPrimitivos(): List<Map<String, Any>> {
+        return try {
+            val pedidosArray = PedidoDao.listar()
+
+            val resultado = mutableListOf<Map<String, Any>>()
+
+            for (pedido in pedidosArray) {
+                val id = pedido[0] as Int
+                val nombreCliente = pedido[1] as String
+                val fechaPedido = pedido[2] as java.sql.Timestamp
+                val total = pedido[3] as Double
+
+                val detallesArray = DetallePedidoDao.listarPorPedido(id)
+                val detallesPrimitivos = mutableListOf<Map<String, Any>>()
+                var cantidadTotal = 0
+
+                for (detalle in detallesArray) {
+                    val cantidad = detalle[2] as Int
+                    val precioUnitario = detalle[3] as Double
+                    cantidadTotal += cantidad
+
+                    detallesPrimitivos.add(mapOf(
+                        "idProducto" to (detalle[1] as Int),
+                        "nombreProducto" to (detalle[4] as String),
+                        "cantidad" to cantidad,
+                        "precioUnitario" to precioUnitario,
+                        "subtotal" to (cantidad.toDouble() * precioUnitario)
+                    ))
+                }
+
+                resultado.add(mapOf(
+                    "id" to id,
+                    "nombreCliente" to nombreCliente,
+                    "fecha" to fechaPedido,
+                    "total" to total,
+                    "cantidadProductos" to cantidadTotal,
+                    "detalles" to detallesPrimitivos
+                ))
+            }
+
+            resultado
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     fun obtenerPedidos(): List<Array<Any>> {
         return PedidoDao.listar()
     }
 
-    // Retorna array [id, nombre_cliente, fecha_pedido, total] o null
     fun obtenerPedidoPorId(id: Int): Array<Any>? {
         return PedidoDao.obtenerPorId(id)
     }
 
-    // Retorna lista de arrays de detalles: [id_pedido, id_producto, cantidad, precio_unitario, producto_nombre, producto_url]
     fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
         return DetallePedidoDao.listarPorPedido(idPedido)
     }
@@ -147,13 +204,14 @@ object PedidoServicio {
         }
     }
 
-    // Utilidades primitivas
     fun calcularTotalDetalles(detalles: List<Array<Any>>): Double {
-        return detalles.sumOf { detalle ->
+        var total = 0.0
+        for (detalle in detalles) {
             val cantidad = detalle[1] as Int
             val precioUnitario = detalle[2] as Double
-            cantidad * precioUnitario
+            total += cantidad * precioUnitario
         }
+        return total
     }
 
     fun calcularSubtotal(cantidad: Int, precioUnitario: Double): Double {
@@ -169,12 +227,13 @@ object PedidoServicio {
     }
 
     fun cantidadTotalProductos(detalles: List<Array<Any>>): Int {
-        return detalles.sumOf { detalle ->
-            detalle[1] as Int // cantidad
+        var total = 0
+        for (detalle in detalles) {
+            total += detalle[1] as Int
         }
+        return total
     }
 
-    // Validaciones primitivas
     fun validarNombreCliente(nombre: String): Boolean {
         return nombre.isNotBlank() && nombre.length <= 100
     }

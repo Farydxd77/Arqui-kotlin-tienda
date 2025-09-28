@@ -17,15 +17,11 @@ import com.example.arquiprimerparcial.presentacion.common.UiState
 import com.example.arquiprimerparcial.presentacion.common.makeCall
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 class HistorialPedidosActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistorialPedidosBinding
-    private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-    // ✅ SOLO PRIMITIVOS
     private var listaPedidos = mutableListOf<Map<String, Any>>()
     private var ventasDelDia = 0.0
     private var totalPedidosHoy = 0
@@ -63,7 +59,6 @@ class HistorialPedidosActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ ADAPTADOR INTERNO PARA PEDIDOS
     inner class PedidoAdapter : RecyclerView.Adapter<PedidoAdapter.PedidoViewHolder>() {
 
         inner class PedidoViewHolder(private val binding: ItemsPedidoBinding) :
@@ -75,6 +70,7 @@ class HistorialPedidosActivity : AppCompatActivity() {
                 val fecha = pedido["fecha"] as String
                 val total = pedido["total"] as Double
                 val cantidadProductos = pedido["cantidadProductos"] as Int
+                @Suppress("UNCHECKED_CAST")
                 val detalles = pedido["detalles"] as List<Map<String, Any>>
 
                 binding.tvNumeroPedido.text = "#${id.toString().padStart(3, '0')}"
@@ -115,34 +111,13 @@ class HistorialPedidosActivity : AppCompatActivity() {
         binding.progressBar.isVisible = true
 
         makeCall {
-            HistorialPedidosServicio.obtenerTodosPedidos()
+            HistorialPedidosServicio.obtenerTodosPedidosPrimitivos()
         }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
                 is UiState.Success -> {
-                    // Convertir modelos a primitivos
                     listaPedidos.clear()
-                    result.data.forEach { pedido ->
-                        // Convertir detalles también
-                        val detallesPrimitivos = pedido.detalles.map { detalle ->
-                            mapOf(
-                                "idProducto" to detalle.idProducto,
-                                "nombreProducto" to detalle.nombreProducto,
-                                "precioUnitario" to detalle.precioUnitario,
-                                "cantidad" to detalle.cantidad,
-                                "subtotal" to detalle.subtotal
-                            )
-                        }
-
-                        listaPedidos.add(mapOf(
-                            "id" to pedido.id,
-                            "nombreCliente" to pedido.nombreCliente,
-                            "fecha" to (pedido.fechaPedido?.let { dateFormat.format(Date(it.time)) } ?: ""),
-                            "total" to pedido.total,
-                            "cantidadProductos" to pedido.cantidadTotalProductos(),
-                            "detalles" to detallesPrimitivos
-                        ))
-                    }
+                    listaPedidos.addAll(result.data)
                     binding.rvPedidos.adapter?.notifyDataSetChanged()
                 }
                 is UiState.Error -> mostrarError(result.message)
@@ -164,7 +139,6 @@ class HistorialPedidosActivity : AppCompatActivity() {
                     binding.tvTotalPedidos.text = "$totalPedidos pedidos"
                 }
                 is UiState.Error -> {
-                    // Ignorar errores de estadísticas, no son críticos
                     binding.tvVentasDelDia.text = "S/ 0.00"
                     binding.tvTotalPedidos.text = "0 pedidos"
                 }
@@ -179,7 +153,9 @@ class HistorialPedidosActivity : AppCompatActivity() {
         total: Double,
         detalles: List<Map<String, Any>>
     ) {
-        val mensaje = construirMensajeDetalle(id, nombreCliente, fecha, total, detalles)
+        val mensaje = HistorialPedidosServicio.construirMensajeDetallePrimitivo(
+            id, nombreCliente, fecha, total, detalles
+        )
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Detalle del Pedido")
@@ -211,10 +187,8 @@ class HistorialPedidosActivity : AppCompatActivity() {
                 is UiState.Success -> {
                     if (result.data.isSuccess) {
                         mostrarExito("Pedido eliminado correctamente")
-                        // Eliminar de la lista local
                         listaPedidos.removeAll { it["id"] == idPedido }
                         binding.rvPedidos.adapter?.notifyDataSetChanged()
-                        // Recargar estadísticas
                         cargarEstadisticas()
                     } else {
                         mostrarError(result.data.exceptionOrNull()?.message ?: "Error al eliminar")
@@ -222,32 +196,6 @@ class HistorialPedidosActivity : AppCompatActivity() {
                 }
                 is UiState.Error -> mostrarError(result.message)
             }
-        }
-    }
-
-    private fun construirMensajeDetalle(
-        id: Int,
-        nombreCliente: String,
-        fecha: String,
-        total: Double,
-        detalles: List<Map<String, Any>>
-    ): String {
-        return buildString {
-            append("📦 Pedido #$id\n\n")
-            append("👤 Cliente: $nombreCliente\n")
-            append("📅 Fecha: $fecha\n\n")
-            append("🛒 Productos:\n")
-            detalles.forEach { detalle ->
-                val nombreProducto = detalle["nombreProducto"] as String
-                val cantidad = detalle["cantidad"] as Int
-                val precioUnitario = detalle["precioUnitario"] as Double
-                val subtotal = detalle["subtotal"] as Double
-
-                append("• $nombreProducto\n")
-                append("  $cantidad x S/ ${"%.2f".format(precioUnitario)}")
-                append(" = S/ ${"%.2f".format(subtotal)}\n")
-            }
-            append("\n💰 Total: S/ ${"%.2f".format(total)}")
         }
     }
 
