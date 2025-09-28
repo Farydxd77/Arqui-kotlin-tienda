@@ -16,49 +16,36 @@ import com.example.arquiprimerparcial.presentacion.common.makeCall
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickListener {
+class HistorialPedidosActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityHistorialPedidosBinding
-    private lateinit var pedidoAdapter: PedidoAdapter
+    private fun cargarTodo() = lifecycleScope.launch {
+        binding.progressBar.isVisible = true
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityHistorialPedidosBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        initToolbar()
-        initUI()
-        cargarPedidos()
-        cargarResumenDelDia()
-    }
-
-    private fun initToolbar() {
-        binding.includeToolbar.toolbar.apply {
-            setSupportActionBar(this)
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            subtitle = "Historial de pedidos"
-            navigationIcon = AppCompatResources.getDrawable(
-                this@HistorialPedidosActivity,
-                R.drawable.baseline_arrow_back_24
-            )
-            setNavigationOnClickListener {
-                onBackPressedDispatcher.onBackPressed()
+        // ✅ SOLO UNA llamada al servicio específico
+        makeCall {
+            HistorialServicio().obtenerHistorialCompleto()
+        }.let { result ->
+            binding.progressBar.isVisible = false
+            when (result) {
+                is UiState.Success -> pedidoAdapter.setList(result.data)
+                is UiState.Error -> mostrarError(result.message)
             }
         }
-        // Ocultar el botón de acción del toolbar
-        binding.includeToolbar.ibAccion.isVisible = false
     }
 
-    private fun initUI() {
-        pedidoAdapter = PedidoAdapter(this)
-        binding.rvPedidos.apply {
-            layoutManager = LinearLayoutManager(this@HistorialPedidosActivity)
-            adapter = pedidoAdapter
+    private fun cargarResumen() = lifecycleScope.launch {
+        makeCall {
+            HistorialServicio().obtenerResumenDelDia()
+        }.let { result ->
+            when (result) {
+                is UiState.Success -> {
+                    val (ventas, totalPedidos) = result.data
+                    binding.tvVentasDelDia.text = "S/ ${"%.2f".format(ventas)}"
+                    binding.tvTotalPedidos.text = "$totalPedidos pedidos"
+                }
+                is UiState.Error -> { /* manejar error */ }
+            }
         }
-    }
-
-    override fun clickVerDetalle(pedido: PedidoModelo) {
-        mostrarDetallePedido(pedido)
     }
 
     override fun clickEliminar(pedido: PedidoModelo) {
@@ -66,74 +53,21 @@ class HistorialPedidosActivity : AppCompatActivity(), PedidoAdapter.IOnClickList
             .setTitle("Eliminar Pedido")
             .setMessage("¿Está seguro de eliminar el pedido #${pedido.id}?")
             .setPositiveButton("Eliminar") { _, _ ->
-                eliminarPedido(pedido.id)
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    private fun cargarPedidos() = lifecycleScope.launch {
-        binding.progressBar.isVisible = true
-        makeCall { PedidoServicio.obtenerPedidos() }.let { result ->
-            binding.progressBar.isVisible = false
-            when (result) {
-                is UiState.Error -> mostrarError(result.message)
-                is UiState.Success -> pedidoAdapter.setList(result.data)
-            }
-        }
-    }
-
-    private fun cargarResumenDelDia() = lifecycleScope.launch {
-        makeCall {
-            Pair(
-                PedidoServicio.obtenerVentasDelDia(),
-                PedidoServicio.obtenerTotalPedidosHoy()
-            )
-        }.let { result ->
-            when (result) {
-                is UiState.Error -> {}
-                is UiState.Success -> {
-                    val (ventasDelDia, totalPedidos) = result.data
-                    binding.tvVentasDelDia.text = "S/ ${String.format("%.2f", ventasDelDia)}"
-                    binding.tvTotalPedidos.text = "$totalPedidos pedidos"
-                }
-            }
-        }
-    }
-
-    private fun mostrarDetallePedido(pedido: PedidoModelo) {
-        val detalles = pedido.detalles.joinToString("\n") { detalle ->
-            "• ${detalle.nombreProducto} x${detalle.cantidad} = S/ ${detalle.formatearSubtotal()}"
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Pedido #${pedido.id}")
-            .setMessage("Cliente: ${pedido.nombreCliente}\n\nProductos:\n$detalles\n\nTotal: S/ ${pedido.formatearTotal()}")
-            .setPositiveButton("OK", null)
-            .show()
-    }
-
-    private fun eliminarPedido(id: Int) = lifecycleScope.launch {
-        makeCall { PedidoServicio.eliminarPedido(id) }.let { result ->
-            when (result) {
-                is UiState.Error -> mostrarError(result.message)
-                is UiState.Success -> {
-                    if (result.data.isSuccess) {
-                        cargarPedidos()
-                        cargarResumenDelDia()
-                    } else {
-                        mostrarError("Error al eliminar pedido")
+                lifecycleScope.launch {
+                    makeCall {
+                        HistorialServicio().eliminarPedidoDelHistorial(pedido.id)
+                    }.let { result ->
+                        when (result) {
+                            is UiState.Success -> if (result.data) {
+                                cargarTodo() // Recargar
+                                cargarResumen()
+                            }
+                            is UiState.Error -> mostrarError(result.message)
+                        }
                     }
                 }
             }
-        }
-    }
-
-    private fun mostrarError(mensaje: String) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Error")
-            .setMessage(mensaje)
-            .setPositiveButton("OK", null)
+            .setNegativeButton("Cancelar", null)
             .show()
     }
 }
