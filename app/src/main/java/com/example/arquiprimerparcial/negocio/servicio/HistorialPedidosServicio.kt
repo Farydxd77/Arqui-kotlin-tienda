@@ -6,10 +6,15 @@ import java.util.*
 
 object HistorialPedidosServicio {
 
+    // ✅ CAPA DE NEGOCIO - Solo llama a DAOs (capa de datos)
+    // ✅ RESPONSABILIDAD: Lógica de negocio + análisis + reportes + transformaciones
+    // ❌ NUNCA accede directamente a Base de Datos
+
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     fun obtenerTodosPedidosPrimitivos(): List<Map<String, Any>> {
         return try {
+            // ✅ TRANSFORMACIÓN COMPLEJA + AGREGACIÓN DE DATOS (lógica de negocio)
             val pedidosArray = HistorialPedidosDao.listarTodos()
 
             val resultado = mutableListOf<Map<String, Any>>()
@@ -41,7 +46,7 @@ object HistorialPedidosServicio {
                 resultado.add(mapOf(
                     "id" to id,
                     "nombreCliente" to nombreCliente,
-                    "fecha" to dateFormat.format(Date(fechaPedido.time)),
+                    "fecha" to dateFormat.format(Date(fechaPedido.time)), // ✅ Formateo de fecha (lógica de negocio)
                     "total" to total,
                     "cantidadProductos" to cantidadTotal,
                     "detalles" to detallesPrimitivos
@@ -63,6 +68,7 @@ object HistorialPedidosServicio {
     }
 
     fun obtenerEstadisticasDia(): Pair<Double, Int> {
+        // ✅ AGREGACIÓN DE DATOS (lógica de negocio para reportes)
         val ventas = HistorialPedidosDao.calcularVentasDia()
         val totalPedidos = HistorialPedidosDao.contarPedidosHoy()
         return Pair(ventas, totalPedidos)
@@ -70,10 +76,12 @@ object HistorialPedidosServicio {
 
     fun eliminarPedidoCompleto(id: Int): Result<Boolean> {
         return try {
+            // ✅ VALIDACIÓN DE NEGOCIO
             if (id <= 0) {
                 return Result.failure(Exception("ID inválido"))
             }
 
+            // Operación de datos - Delegar a DAO
             val resultado = HistorialPedidosDao.eliminarPedido(id)
             if (resultado) {
                 Result.success(true)
@@ -97,6 +105,7 @@ object HistorialPedidosServicio {
         return HistorialPedidosDao.obtenerEstadisticasCompletas()
     }
 
+    // ✅ LÓGICA DE NEGOCIO PURA (construcción de mensajes y formateo)
     fun construirMensajeDetallePrimitivo(
         id: Int,
         nombreCliente: String,
@@ -149,6 +158,7 @@ object HistorialPedidosServicio {
         }
     }
 
+    // ✅ VALIDACIONES DE DOMINIO
     fun validarFecha(fecha: String): Boolean {
         return try {
             val regex = "\\d{4}-\\d{2}-\\d{2}".toRegex()
@@ -170,6 +180,7 @@ object HistorialPedidosServicio {
         return String.format("%.2f", total)
     }
 
+    // ✅ LÓGICA DE ANÁLISIS DE NEGOCIO (reportes y estadísticas)
     fun calcularTotalVentas(pedidos: List<Array<Any>>): Double {
         var totalVentas = 0.0
         for (pedido in pedidos) {
@@ -196,11 +207,13 @@ object HistorialPedidosServicio {
 
     fun obtenerClientesMasFrecuentes(pedidos: List<Array<Any>>, limite: Int = 5): List<Pair<String, Int>> {
         return contarPedidosPorCliente(pedidos)
-            .toList()
-            .sortedByDescending { it.second }
+            .entries
+            .map { entry -> Pair(entry.key, entry.value) }
+            .sortedByDescending { pair -> pair.second }
             .take(limite)
     }
 
+    // ✅ LÓGICA DE FILTRADO Y ORDENAMIENTO (operaciones de negocio)
     fun filtrarPedidosPorCliente(pedidos: List<Array<Any>>, nombreCliente: String): List<Array<Any>> {
         val resultado = mutableListOf<Array<Any>>()
         for (pedido in pedidos) {
@@ -225,17 +238,33 @@ object HistorialPedidosServicio {
 
     fun ordenarPedidosPorFecha(pedidos: List<Array<Any>>, ascendente: Boolean = false): List<Array<Any>> {
         return if (ascendente) {
-            pedidos.sortedBy { it[2] }
+            pedidos.sortedWith { pedido1, pedido2 ->
+                val fecha1 = pedido1[2] as java.sql.Timestamp
+                val fecha2 = pedido2[2] as java.sql.Timestamp
+                fecha1.compareTo(fecha2)
+            }
         } else {
-            pedidos.sortedByDescending { it[2] }
+            pedidos.sortedWith { pedido1, pedido2 ->
+                val fecha1 = pedido1[2] as java.sql.Timestamp
+                val fecha2 = pedido2[2] as java.sql.Timestamp
+                fecha2.compareTo(fecha1)
+            }
         }
     }
 
     fun ordenarPedidosPorTotal(pedidos: List<Array<Any>>, ascendente: Boolean = false): List<Array<Any>> {
         return if (ascendente) {
-            pedidos.sortedBy { it[3] as Double }
+            pedidos.sortedWith { pedido1, pedido2 ->
+                val total1 = pedido1[3] as Double
+                val total2 = pedido2[3] as Double
+                total1.compareTo(total2)
+            }
         } else {
-            pedidos.sortedByDescending { it[3] as Double }
+            pedidos.sortedWith { pedido1, pedido2 ->
+                val total1 = pedido1[3] as Double
+                val total2 = pedido2[3] as Double
+                total2.compareTo(total1)
+            }
         }
     }
 }
