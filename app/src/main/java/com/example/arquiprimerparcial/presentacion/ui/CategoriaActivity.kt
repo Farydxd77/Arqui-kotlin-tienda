@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 class CategoriaActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCategoriaBinding
     private lateinit var adapter: CategoriaAdapterIntegrado
+    private val categoriaServicio: CategoriaServicio = CategoriaServicio()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,9 +130,9 @@ class CategoriaActivity : AppCompatActivity() {
         val result = withContext(Dispatchers.IO) {
             try {
                 if (filtro.isEmpty()) {
-                    UiState.Success(CategoriaServicio.listarCategorias())
+                    UiState.Success(categoriaServicio.listarCategorias())
                 } else {
-                    UiState.Success(CategoriaServicio.obtenerCategoriasConFiltro(filtro))
+                    UiState.Success(categoriaServicio.obtenerCategoriasConFiltro(filtro))
                 }
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
@@ -162,7 +163,7 @@ class CategoriaActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(CategoriaServicio.eliminarCategoria(id))
+                UiState.Success(categoriaServicio.eliminarCategoria(id))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }

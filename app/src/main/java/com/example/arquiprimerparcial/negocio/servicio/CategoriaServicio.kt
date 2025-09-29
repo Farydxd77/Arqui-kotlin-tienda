@@ -1,16 +1,18 @@
 package com.example.arquiprimerparcial.negocio.servicio
 
 import com.example.arquiprimerparcial.data.dao.CategoriaDao
+import com.example.arquiprimerparcial.data.dao.ProductoDao
 
-object CategoriaServicio {
+class CategoriaServicio {
 
+    private val categoriaDao: CategoriaDao = CategoriaDao()
     // Retorna lista de arrays: [id, nombre, descripcion]
     fun listarCategorias(): List<Array<Any>> {
-        return CategoriaDao.listar()
+        return categoriaDao.listar()
     }
 
     fun obtenerCategoriasConFiltro(filtro: String): List<Array<Any>> {
-        return CategoriaDao.listarConFiltro(filtro)
+        return categoriaDao.listarConFiltro(filtro)
     }
 
     fun guardarCategoria(id: Int, nombre: String, descripcion: String): Result<Boolean> {
@@ -33,16 +35,16 @@ object CategoriaServicio {
             }
 
             // Verificar si el nombre ya existe
-            if (CategoriaDao.existeNombre(nombre, id)) {
+            if (categoriaDao.existeNombre(nombre, id)) {
                 return Result.failure(Exception("Ya existe una categoría con este nombre"))
             }
 
             val resultado = if (id == 0) {
                 // Crear nueva categoría
-                CategoriaDao.insertar(nombre.trim(), descripcion.trim())
+                categoriaDao.insertar(nombre.trim(), descripcion.trim())
             } else {
                 // Actualizar categoría existente
-                CategoriaDao.actualizar(id, nombre.trim(), descripcion.trim())
+                categoriaDao.actualizar(id, nombre.trim(), descripcion.trim())
             }
 
             if (resultado) {
@@ -62,12 +64,12 @@ object CategoriaServicio {
             }
 
             // Verificar si tiene productos asociados
-            val totalProductos = CategoriaDao.contarProductos(id)
+            val totalProductos = categoriaDao.contarProductos(id)
             if (totalProductos > 0) {
                 return Result.failure(Exception("No se puede eliminar. La categoría tiene $totalProductos producto(s) asociado(s)"))
             }
 
-            val resultado = CategoriaDao.eliminar(id)
+            val resultado = categoriaDao.eliminar(id)
             if (resultado) {
                 Result.success(true)
             } else {
@@ -80,7 +82,7 @@ object CategoriaServicio {
 
     // Retorna array [id, nombre, descripcion] o null
     fun obtenerCategoriaPorId(id: Int): Array<Any>? {
-        return CategoriaDao.obtenerPorId(id)
+        return categoriaDao.obtenerPorId(id)
     }
 
     // Validaciones primitivas
@@ -93,10 +95,10 @@ object CategoriaServicio {
     }
 
     fun existeNombre(nombre: String, idExcluir: Int = 0): Boolean {
-        return CategoriaDao.existeNombre(nombre, idExcluir)
+        return categoriaDao.existeNombre(nombre, idExcluir)
     }
 
     fun contarProductosEnCategoria(idCategoria: Int): Int {
-        return CategoriaDao.contarProductos(idCategoria)
+        return categoriaDao.contarProductos(idCategoria)
     }
 }

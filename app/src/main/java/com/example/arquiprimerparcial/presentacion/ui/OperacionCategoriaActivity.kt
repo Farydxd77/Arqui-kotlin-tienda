@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class OperacionCategoriaActivity : AppCompatActivity() {
+
+    private val categoriaServicio: CategoriaServicio = CategoriaServicio()
     private lateinit var binding: ActivityOperacionCategoriaBinding
     private var categoriaId = 0
 
@@ -69,12 +71,12 @@ class OperacionCategoriaActivity : AppCompatActivity() {
                 binding.etNombre.requestFocus()
                 return false
             }
-            !CategoriaServicio.validarNombre(nombre) -> {
+            !categoriaServicio.validarNombre(nombre) -> {
                 mostrarAdvertencia("El nombre debe tener entre 2 y 50 caracteres")
                 binding.etNombre.requestFocus()
                 return false
             }
-            !CategoriaServicio.validarDescripcion(descripcion) -> {
+            !categoriaServicio.validarDescripcion(descripcion) -> {
                 mostrarAdvertencia("La descripción no puede exceder 200 caracteres")
                 binding.etDescripcion.requestFocus()
                 return false
@@ -92,7 +94,7 @@ class OperacionCategoriaActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(CategoriaServicio.guardarCategoria(categoriaId, nombre, descripcion))
+                UiState.Success(categoriaServicio.guardarCategoria(categoriaId, nombre, descripcion))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }

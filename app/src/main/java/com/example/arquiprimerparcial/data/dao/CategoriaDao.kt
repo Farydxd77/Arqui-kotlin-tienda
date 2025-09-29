@@ -2,9 +2,8 @@ package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
 
-object CategoriaDao {
+class CategoriaDao {
 
-    // Retorna lista de arrays: [id, nombre, descripcion]
     fun listar(): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -59,7 +58,6 @@ object CategoriaDao {
         return lista
     }
 
-    // Parámetros primitivos: nombre, descripcion
     fun insertar(nombre: String, descripcion: String): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -103,7 +101,6 @@ object CategoriaDao {
     fun eliminar(id: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
-                // Verificar productos asociados
                 val sqlVerificar = """
                     SELECT COUNT(*) as total 
                     FROM producto 
@@ -118,7 +115,6 @@ object CategoriaDao {
                     }
                 }
 
-                // Eliminar categoría
                 val sql = "DELETE FROM categoria WHERE id = ?"
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, id)
@@ -131,7 +127,6 @@ object CategoriaDao {
         }
     }
 
-    // Retorna array [id, nombre, descripcion] o null
     fun obtenerPorId(id: Int): Array<Any>? {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->

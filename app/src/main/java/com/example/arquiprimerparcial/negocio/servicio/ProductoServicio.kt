@@ -3,11 +3,15 @@ package com.example.arquiprimerparcial.negocio.servicio
 import com.example.arquiprimerparcial.data.dao.CategoriaDao
 import com.example.arquiprimerparcial.data.dao.ProductoDao
 
-object ProductoServicio {
+class ProductoServicio {
+
+    // ✅ Instancias privadas de los DAOs
+    private val productoDao: ProductoDao = ProductoDao()
+    private val categoriaDao: CategoriaDao = CategoriaDao()
 
     fun listarProductosPrimitivos(filtro: String = ""): List<Map<String, Any>> {
         return try {
-            val productosArray = ProductoDao.listarProducto(filtro)
+            val productosArray = productoDao.listarProducto(filtro)
 
             val resultado = mutableListOf<Map<String, Any>>()
 
@@ -32,15 +36,15 @@ object ProductoServicio {
     }
 
     fun listarProductos(filtro: String = ""): List<Array<Any>> {
-        return ProductoDao.listarProducto(filtro)
+        return productoDao.listarProducto(filtro)
     }
 
     fun obtenerProductosPorCategoria(idCategoria: Int): List<Array<Any>> {
-        return ProductoDao.listarPorCategoria(idCategoria)
+        return productoDao.listarPorCategoria(idCategoria)
     }
 
     fun obtenerProductoPorId(id: Int): Array<Any>? {
-        return ProductoDao.obtenerPorId(id)
+        return productoDao.obtenerPorId(id)
     }
 
     fun crearProductoActualizar(id: Int, nombre: String, descripcion: String, url: String,
@@ -75,19 +79,19 @@ object ProductoServicio {
             }
 
             if (idCategoria > 0) {
-                val categoria = CategoriaDao.obtenerPorId(idCategoria)
+                val categoria = categoriaDao.obtenerPorId(idCategoria)
                 if (categoria == null) {
                     return Result.failure(Exception("La categoría seleccionada no existe"))
                 }
             }
 
             val resultado = if (id == 0) {
-                ProductoDao.crearProducto(
+                productoDao.crearProducto(
                     nombre.trim(), descripcion.trim(), url.trim(),
                     precio, stock, idCategoria, activo
                 )
             } else {
-                ProductoDao.actualizarProducto(
+                productoDao.actualizarProducto(
                     id, nombre.trim(), descripcion.trim(), url.trim(),
                     precio, stock, idCategoria, activo
                 )
@@ -109,7 +113,7 @@ object ProductoServicio {
                 return Result.failure(Exception("ID de producto inválido"))
             }
 
-            val resultado = ProductoDao.desactivarProducto(id)
+            val resultado = productoDao.desactivarProducto(id)
             if (resultado) {
                 Result.success(true)
             } else {
@@ -126,12 +130,12 @@ object ProductoServicio {
                 return Result.failure(Exception("ID de producto inválido"))
             }
 
-            val productoArray = ProductoDao.obtenerPorId(id)
+            val productoArray = productoDao.obtenerPorId(id)
             if (productoArray == null) {
                 return Result.failure(Exception("Producto no encontrado"))
             }
 
-            val resultado = ProductoDao.actualizarProducto(
+            val resultado = productoDao.actualizarProducto(
                 id = productoArray[0] as Int,
                 nombre = productoArray[1] as String,
                 descripcion = productoArray[2] as String,
@@ -158,7 +162,7 @@ object ProductoServicio {
                 return Result.failure(Exception("El stock no puede ser negativo"))
             }
 
-            val resultado = ProductoDao.actualizarStock(id, nuevoStock)
+            val resultado = productoDao.actualizarStock(id, nuevoStock)
             if (resultado) {
                 Result.success(true)
             } else {
@@ -170,7 +174,7 @@ object ProductoServicio {
     }
 
     fun obtenerProductosStockBajo(limite: Int = 5): List<Array<Any>> {
-        return ProductoDao.listarStockBajo(limite)
+        return productoDao.listarStockBajo(limite)
     }
 
     fun validarPrecio(precio: String): Boolean {

@@ -1,21 +1,21 @@
 package com.example.arquiprimerparcial.negocio.servicio
 
+import com.example.arquiprimerparcial.data.dao.CategoriaDao
 import com.example.arquiprimerparcial.data.dao.HistorialPedidosDao
 import java.text.SimpleDateFormat
 import java.util.*
 
-object HistorialPedidosServicio {
+class HistorialPedidosServicio {
 
-    // ✅ CAPA DE NEGOCIO - Solo llama a DAOs (capa de datos)
-    // ✅ RESPONSABILIDAD: Lógica de negocio + análisis + reportes + transformaciones
-    // ❌ NUNCA accede directamente a Base de Datos
+
+    private val historialPedidosDao: HistorialPedidosDao = HistorialPedidosDao()
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     fun obtenerTodosPedidosPrimitivos(): List<Map<String, Any>> {
         return try {
             // ✅ TRANSFORMACIÓN COMPLEJA + AGREGACIÓN DE DATOS (lógica de negocio)
-            val pedidosArray = HistorialPedidosDao.listarTodos()
+            val pedidosArray = historialPedidosDao.listarTodos()
 
             val resultado = mutableListOf<Map<String, Any>>()
 
@@ -25,7 +25,7 @@ object HistorialPedidosServicio {
                 val fechaPedido = pedido[2] as java.sql.Timestamp
                 val total = pedido[3] as Double
 
-                val detallesArray = HistorialPedidosDao.obtenerDetallesPedido(id)
+                val detallesArray = historialPedidosDao.obtenerDetallesPedido(id)
                 val detallesPrimitivos = mutableListOf<Map<String, Any>>()
                 var cantidadTotal = 0
 
@@ -60,17 +60,17 @@ object HistorialPedidosServicio {
     }
 
     fun obtenerTodosPedidos(): List<Array<Any>> {
-        return HistorialPedidosDao.listarTodos()
+        return historialPedidosDao.listarTodos()
     }
 
     fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
-        return HistorialPedidosDao.obtenerDetallesPedido(idPedido)
+        return historialPedidosDao.obtenerDetallesPedido(idPedido)
     }
 
     fun obtenerEstadisticasDia(): Pair<Double, Int> {
         // ✅ AGREGACIÓN DE DATOS (lógica de negocio para reportes)
-        val ventas = HistorialPedidosDao.calcularVentasDia()
-        val totalPedidos = HistorialPedidosDao.contarPedidosHoy()
+        val ventas = historialPedidosDao.calcularVentasDia()
+        val totalPedidos = historialPedidosDao.contarPedidosHoy()
         return Pair(ventas, totalPedidos)
     }
 
@@ -82,7 +82,7 @@ object HistorialPedidosServicio {
             }
 
             // Operación de datos - Delegar a DAO
-            val resultado = HistorialPedidosDao.eliminarPedido(id)
+            val resultado = historialPedidosDao.eliminarPedido(id)
             if (resultado) {
                 Result.success(true)
             } else {
@@ -94,15 +94,15 @@ object HistorialPedidosServicio {
     }
 
     fun calcularVentasPorPeriodo(fechaInicio: String, fechaFin: String): Double {
-        return HistorialPedidosDao.calcularVentasPorPeriodo(fechaInicio, fechaFin)
+        return historialPedidosDao.calcularVentasPorPeriodo(fechaInicio, fechaFin)
     }
 
     fun obtenerPedidosPorRangoFechas(fechaInicio: String, fechaFin: String): List<Array<Any>> {
-        return HistorialPedidosDao.listarPorRangoFechas(fechaInicio, fechaFin)
+        return historialPedidosDao.listarPorRangoFechas(fechaInicio, fechaFin)
     }
 
     fun obtenerEstadisticasCompletas(): Map<String, Any> {
-        return HistorialPedidosDao.obtenerEstadisticasCompletas()
+        return historialPedidosDao.obtenerEstadisticasCompletas()
     }
 
     // ✅ LÓGICA DE NEGOCIO PURA (construcción de mensajes y formateo)

@@ -1,3 +1,4 @@
+// MainActivity.kt
 package com.example.arquiprimerparcial.presentacion.ui
 
 import android.content.Context
@@ -31,6 +32,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: ProductoAdapterIntegrado
 
+    // ✅ CORRECTO - Solo instancia del SERVICIO
+    private val productoServicio: ProductoServicio = ProductoServicio()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -50,6 +54,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initAdapter() {
         adapter = ProductoAdapterIntegrado(
+            productoServicio = productoServicio,
             onClickEditar = { productoMap ->
                 val id = productoMap["id"] as Int
                 val nombre = productoMap["nombre"] as String
@@ -136,7 +141,7 @@ class MainActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(ProductoServicio.listarProductosPrimitivos(filtro))
+                UiState.Success(productoServicio.listarProductosPrimitivos(filtro))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
@@ -157,7 +162,7 @@ class MainActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(ProductoServicio.desactivarProducto(id))
+                UiState.Success(productoServicio.desactivarProducto(id))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
@@ -196,6 +201,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private class ProductoAdapterIntegrado(
+        private val productoServicio: ProductoServicio,
         private val onClickEditar: (Map<String, Any>) -> Unit,
         private val onClickEliminar: (Map<String, Any>) -> Unit
     ) : RecyclerView.Adapter<ProductoAdapterIntegrado.ProductoViewHolder>() {
@@ -227,14 +233,14 @@ class MainActivity : AppCompatActivity() {
                     else -> "🏷️ Sin categoría"
                 }
                 tvStock.text = "Stock: $stock"
-                tvPrecio.text = "S/ ${ProductoServicio.formatearPrecio(precio)}"
+                tvPrecio.text = "S/ ${productoServicio.formatearPrecio(precio)}"
 
                 when {
-                    ProductoServicio.sinStockPrimitivo(productoMap) -> {
+                    productoServicio.sinStockPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.RED)
                         itemView.alpha = 0.6f
                     }
-                    ProductoServicio.stockBajoPrimitivo(productoMap) -> {
+                    productoServicio.stockBajoPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.parseColor("#FF9800"))
                         itemView.alpha = 0.8f
                     }

@@ -23,6 +23,8 @@ import kotlinx.coroutines.launch
 class CrearPedidoActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCrearPedidoBinding
+    private val pedidoServicio: PedidoServicio = PedidoServicio()
+    private val productoServicio: ProductoServicio = ProductoServicio()
 
     private var listaProductos = mutableListOf<Map<String, Any>>()
     private var detallesPedido = mutableListOf<Map<String, Any>>()
@@ -246,7 +248,7 @@ class CrearPedidoActivity : AppCompatActivity() {
 
     private fun cargarProductos(filtro: String = "") = lifecycleScope.launch {
         binding.progressBar.isVisible = true
-        makeCall { ProductoServicio.listarProductosPrimitivos(filtro) }.let { result ->
+        makeCall { productoServicio.listarProductosPrimitivos(filtro) }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
                 is UiState.Error -> mostrarError(result.message)
@@ -304,7 +306,7 @@ class CrearPedidoActivity : AppCompatActivity() {
             "total" to totalPedido
         )
 
-        makeCall { PedidoServicio.crearPedidoPrimitivo(pedidoData) }.let { result ->
+        makeCall { pedidoServicio.crearPedidoPrimitivo(pedidoData) }.let { result ->
             binding.progressBar.isVisible = false
 
             when (result) {

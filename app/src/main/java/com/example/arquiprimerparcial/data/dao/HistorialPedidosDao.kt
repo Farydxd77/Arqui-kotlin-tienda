@@ -2,9 +2,8 @@ package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
 
-object HistorialPedidosDao {
+class HistorialPedidosDao {
 
-    // Retorna lista de arrays: [id, nombre_cliente, fecha_pedido, total]
     fun listarTodos(): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -32,7 +31,6 @@ object HistorialPedidosDao {
         return lista
     }
 
-    // Retorna lista de arrays: [id_pedido, id_producto, cantidad, precio_unitario, producto_nombre, producto_url]
     fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -109,7 +107,6 @@ object HistorialPedidosDao {
     fun eliminarPedido(id: Int): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
-                // Gracias al CASCADE en la DB, se eliminan automáticamente los detalles
                 val sql = "DELETE FROM pedido WHERE id = ?"
                 conexion.prepareStatement(sql).use { ps ->
                     ps.setInt(1, id)
@@ -144,12 +141,10 @@ object HistorialPedidosDao {
         }
     }
 
-    // Retorna Map con estadísticas primitivas
     fun obtenerEstadisticasCompletas(): Map<String, Any> {
         val estadisticas = mutableMapOf<String, Any>()
 
         PostgresqlConexion.getConexion().use { conexion ->
-            // Total de pedidos
             var sql = "SELECT COUNT(*) as total FROM pedido"
             conexion.prepareStatement(sql).use { ps ->
                 ps.executeQuery().use { rs ->
@@ -159,7 +154,6 @@ object HistorialPedidosDao {
                 }
             }
 
-            // Total de ventas
             sql = "SELECT COALESCE(SUM(total), 0) as total_ventas FROM pedido"
             conexion.prepareStatement(sql).use { ps ->
                 ps.executeQuery().use { rs ->
@@ -169,7 +163,6 @@ object HistorialPedidosDao {
                 }
             }
 
-            // Promedio por pedido
             sql = "SELECT COALESCE(AVG(total), 0) as promedio FROM pedido"
             conexion.prepareStatement(sql).use { ps ->
                 ps.executeQuery().use { rs ->
@@ -183,7 +176,6 @@ object HistorialPedidosDao {
         return estadisticas
     }
 
-    // Retorna lista de arrays con pedidos por rango de fechas
     fun listarPorRangoFechas(fechaInicio: String, fechaFin: String): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 

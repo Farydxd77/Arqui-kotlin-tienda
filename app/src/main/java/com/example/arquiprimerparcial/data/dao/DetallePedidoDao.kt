@@ -2,9 +2,8 @@ package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
 
-object DetallePedidoDao {
+class DetallePedidoDao {
 
-    // Retorna lista de arrays: [id_pedido, id_producto, cantidad, precio_unitario, producto_nombre, producto_url]
     fun listarPorPedido(idPedido: Int): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -38,7 +37,6 @@ object DetallePedidoDao {
         return lista
     }
 
-    // Parámetros primitivos: idPedido, idProducto, cantidad, precioUnitario
     fun insertar(idPedido: Int, idProducto: Int, cantidad: Int, precioUnitario: Double): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -116,7 +114,6 @@ object DetallePedidoDao {
         }
     }
 
-    // Retorna array [id_pedido, id_producto, cantidad, precio_unitario, producto_nombre, producto_url] o null
     fun obtenerPorPedidoYProducto(idPedido: Int, idProducto: Int): Array<Any>? {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -150,8 +147,6 @@ object DetallePedidoDao {
         }
     }
 
-    // Para insertar múltiples detalles de una vez
-    // Cada detalle debe ser array de [idPedido, idProducto, cantidad, precioUnitario]
     fun insertarLote(detalles: List<Array<Any>>): Boolean {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -162,10 +157,10 @@ object DetallePedidoDao {
                 """
                 conexion.prepareStatement(sql).use { ps ->
                     for (detalle in detalles) {
-                        ps.setInt(1, detalle[0] as Int)       // idPedido
-                        ps.setInt(2, detalle[1] as Int)       // idProducto
-                        ps.setInt(3, detalle[2] as Int)       // cantidad
-                        ps.setDouble(4, detalle[3] as Double) // precioUnitario
+                        ps.setInt(1, detalle[0] as Int)
+                        ps.setInt(2, detalle[1] as Int)
+                        ps.setInt(3, detalle[2] as Int)
+                        ps.setDouble(4, detalle[3] as Double)
                         ps.addBatch()
                     }
                     val results = ps.executeBatch()
@@ -179,7 +174,6 @@ object DetallePedidoDao {
         }
     }
 
-    // Retorna lista de arrays [id_producto, cantidad_total_vendida]
     fun obtenerProductosMasVendidos(limite: Int = 10): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 

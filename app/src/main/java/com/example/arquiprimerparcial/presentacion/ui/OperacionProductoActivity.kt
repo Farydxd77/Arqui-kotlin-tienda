@@ -25,6 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class OperacionProductoActivity : AppCompatActivity() {
+    private val productoServicio: ProductoServicio = ProductoServicio()
+    private val categoriaServicio: CategoriaServicio = CategoriaServicio()
     private lateinit var binding: ActivityOperacionProductoBinding
     private var productoId = 0
     private var imageUrl = ""
@@ -95,7 +97,7 @@ class OperacionProductoActivity : AppCompatActivity() {
     private fun cargarCategorias() = lifecycleScope.launch {
         try {
             val result = withContext(Dispatchers.IO) {
-                CategoriaServicio.listarCategorias()
+                categoriaServicio.listarCategorias()
             }
 
             listaCategorias.clear()
@@ -172,12 +174,12 @@ class OperacionProductoActivity : AppCompatActivity() {
         val stock = binding.etStock.text.toString().trim()
 
         when {
-            !ProductoServicio.validarNombre(nombre) -> {
+            !productoServicio.validarNombre(nombre) -> {
                 mostrarAdvertencia("El nombre debe tener entre 3 y 200 caracteres")
                 binding.etDescripcion.requestFocus()
                 return false
             }
-            !ProductoServicio.validarDescripcion(descripcion) -> {
+            !productoServicio.validarDescripcion(descripcion) -> {
                 mostrarAdvertencia("La descripción no puede exceder 500 caracteres")
                 binding.etCodigoBarra.requestFocus()
                 return false
@@ -187,7 +189,7 @@ class OperacionProductoActivity : AppCompatActivity() {
                 binding.etPrecio.requestFocus()
                 return false
             }
-            !ProductoServicio.validarPrecio(precio) -> {
+            !productoServicio.validarPrecio(precio) -> {
                 mostrarAdvertencia("El precio debe ser un número válido mayor a 0")
                 binding.etPrecio.requestFocus()
                 return false
@@ -197,7 +199,7 @@ class OperacionProductoActivity : AppCompatActivity() {
                 binding.etStock.requestFocus()
                 return false
             }
-            !ProductoServicio.validarStock(stock) -> {
+            !productoServicio.validarStock(stock) -> {
                 mostrarAdvertencia("El stock debe ser un número válido mayor o igual a 0")
                 binding.etStock.requestFocus()
                 return false
@@ -229,7 +231,7 @@ class OperacionProductoActivity : AppCompatActivity() {
             val result = withContext(Dispatchers.IO) {
                 try {
                     UiState.Success(
-                        ProductoServicio.crearProductoActualizar(
+                        productoServicio.crearProductoActualizar(
                             id = productoId,
                             nombre = nombre,
                             descripcion = descripcion,

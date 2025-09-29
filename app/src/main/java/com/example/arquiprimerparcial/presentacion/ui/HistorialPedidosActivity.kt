@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 class HistorialPedidosActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistorialPedidosBinding
+    private val historialPedidosServicio: HistorialPedidosServicio = HistorialPedidosServicio()
 
     private var listaPedidos = mutableListOf<Map<String, Any>>()
     private var ventasDelDia = 0.0
@@ -111,7 +112,7 @@ class HistorialPedidosActivity : AppCompatActivity() {
         binding.progressBar.isVisible = true
 
         makeCall {
-            HistorialPedidosServicio.obtenerTodosPedidosPrimitivos()
+            historialPedidosServicio.obtenerTodosPedidosPrimitivos()
         }.let { result ->
             binding.progressBar.isVisible = false
             when (result) {
@@ -127,7 +128,7 @@ class HistorialPedidosActivity : AppCompatActivity() {
 
     private fun cargarEstadisticas() = lifecycleScope.launch {
         makeCall {
-            HistorialPedidosServicio.obtenerEstadisticasDia()
+            historialPedidosServicio.obtenerEstadisticasDia()
         }.let { result ->
             when (result) {
                 is UiState.Success -> {
@@ -153,7 +154,7 @@ class HistorialPedidosActivity : AppCompatActivity() {
         total: Double,
         detalles: List<Map<String, Any>>
     ) {
-        val mensaje = HistorialPedidosServicio.construirMensajeDetallePrimitivo(
+        val mensaje = historialPedidosServicio.construirMensajeDetallePrimitivo(
             id, nombreCliente, fecha, total, detalles
         )
 
@@ -179,7 +180,7 @@ class HistorialPedidosActivity : AppCompatActivity() {
         binding.progressBar.isVisible = true
 
         makeCall {
-            HistorialPedidosServicio.eliminarPedidoCompleto(idPedido)
+            historialPedidosServicio.eliminarPedidoCompleto(idPedido)
         }.let { result ->
             binding.progressBar.isVisible = false
 

@@ -3,9 +3,8 @@ package com.example.arquiprimerparcial.data.dao
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
 import java.sql.Timestamp
 
-object PedidoDao {
+class PedidoDao {
 
-    // Retorna lista de arrays: [id, nombre_cliente, fecha_pedido, total]
     fun listar(): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -63,7 +62,6 @@ object PedidoDao {
         return lista
     }
 
-    // Parámetros primitivos: nombreCliente, fechaPedido, total
     fun insertar(nombreCliente: String, fechaPedido: Timestamp?, total: Double): Int {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -124,7 +122,6 @@ object PedidoDao {
         }
     }
 
-    // Retorna array [id, nombre_cliente, fecha_pedido, total] o null
     fun obtenerPorId(id: Int): Array<Any>? {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->

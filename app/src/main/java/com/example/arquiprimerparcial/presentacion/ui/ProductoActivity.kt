@@ -29,6 +29,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ProductoActivity : AppCompatActivity() {
+
+    // ✅ Instancia del servicio
+    private val productoServicio: ProductoServicio = ProductoServicio()
+
     private lateinit var binding: ActivityProductoBinding
     private lateinit var adapter: ProductoAdapterIntegrado
 
@@ -70,6 +74,7 @@ class ProductoActivity : AppCompatActivity() {
 
     private fun initAdapter() {
         adapter = ProductoAdapterIntegrado(
+            productoServicio = productoServicio, // ✅ PASAR LA INSTANCIA AQUÍ
             onClickEditar = { productoMap ->
                 val id = productoMap["id"] as Int
                 val nombre = productoMap["nombre"] as String
@@ -148,7 +153,7 @@ class ProductoActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(ProductoServicio.listarProductosPrimitivos(filtro))
+                UiState.Success(productoServicio.listarProductosPrimitivos(filtro))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
@@ -177,7 +182,7 @@ class ProductoActivity : AppCompatActivity() {
 
         val result = withContext(Dispatchers.IO) {
             try {
-                UiState.Success(ProductoServicio.desactivarProducto(id))
+                UiState.Success(productoServicio.desactivarProducto(id))
             } catch (e: Exception) {
                 UiState.Error(e.message.orEmpty())
             }
@@ -219,7 +224,11 @@ class ProductoActivity : AppCompatActivity() {
         inputMethodManager.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
 
+    // ================================
+    // ADAPTADOR INTEGRADO
+    // ================================
     private class ProductoAdapterIntegrado(
+        private val productoServicio: ProductoServicio, // ✅ RECIBE LA INSTANCIA
         private val onClickEditar: (Map<String, Any>) -> Unit,
         private val onClickEliminar: (Map<String, Any>) -> Unit
     ) : RecyclerView.Adapter<ProductoAdapterIntegrado.ProductoViewHolder>() {
@@ -250,15 +259,18 @@ class ProductoActivity : AppCompatActivity() {
                     idCategoria > 0 -> "🏷️ Categoría ID: $idCategoria"
                     else -> "🏷️ Sin categoría"
                 }
+
                 tvStock.text = "Stock: $stock"
-                tvPrecio.text = "S/ ${ProductoServicio.formatearPrecio(precio)}"
+
+                // ✅ USA LA INSTANCIA DEL SERVICIO
+                tvPrecio.text = "S/ ${productoServicio.formatearPrecio(precio)}"
 
                 when {
-                    ProductoServicio.sinStockPrimitivo(productoMap) -> {
+                    productoServicio.sinStockPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.RED)
                         itemView.alpha = 0.6f
                     }
-                    ProductoServicio.stockBajoPrimitivo(productoMap) -> {
+                    productoServicio.stockBajoPrimitivo(productoMap) -> {
                         tvStock.setTextColor(Color.parseColor("#FF9800"))
                         itemView.alpha = 0.8f
                     }

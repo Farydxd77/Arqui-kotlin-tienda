@@ -1,10 +1,10 @@
+// ProductoDao.kt
 package com.example.arquiprimerparcial.data.dao
 
 import com.example.arquiprimerparcial.data.conexion.PostgresqlConexion
 
-object ProductoDao {
+class ProductoDao {
 
-    // Retorna lista de arrays: [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre]
     fun listarProducto(filtro: String): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
 
@@ -43,7 +43,6 @@ object ProductoDao {
 
     fun listarPorCategoria(idCategoria: Int): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
-
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
                 SELECT p.id, p.nombre, p.descripcion, p.url, p.precio, p.stock, 
@@ -77,7 +76,6 @@ object ProductoDao {
         return lista
     }
 
-    // Parámetros primitivos: nombre, descripcion, url, precio, stock, idCategoria, activo
     fun crearProducto(nombre: String, descripcion: String, url: String,
                       precio: Double, stock: Int, idCategoria: Int, activo: Boolean): Boolean {
         return try {
@@ -158,22 +156,6 @@ object ProductoDao {
         }
     }
 
-    fun eliminarFisico(id: Int): Boolean {
-        return try {
-            PostgresqlConexion.getConexion().use { conexion ->
-                val sql = "DELETE FROM producto WHERE id = ?"
-                conexion.prepareStatement(sql).use { ps ->
-                    ps.setInt(1, id)
-                    ps.executeUpdate() > 0
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
-
-    // Retorna array [id, nombre, descripcion, url, precio, stock, id_categoria, activo, categoria_nombre] o null
     fun obtenerPorId(id: Int): Array<Any>? {
         return try {
             PostgresqlConexion.getConexion().use { conexion ->
@@ -231,7 +213,6 @@ object ProductoDao {
 
     fun listarStockBajo(limite: Int = 5): List<Array<Any>> {
         val lista = mutableListOf<Array<Any>>()
-
         PostgresqlConexion.getConexion().use { conexion ->
             val sql = """
                 SELECT p.id, p.nombre, p.descripcion, p.url, p.precio, p.stock, 
