@@ -5,7 +5,7 @@ import com.example.arquiprimerparcial.data.dao.ProductoDao
 
 class ProductoServicio {
 
-    // ✅ Instancias privadas de los DAOs
+    // Instancias privadas de los DAOs
     private val productoDao: ProductoDao = ProductoDao()
     private val categoriaDao: CategoriaDao = CategoriaDao()
 

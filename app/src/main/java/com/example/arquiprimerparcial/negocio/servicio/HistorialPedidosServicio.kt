@@ -14,7 +14,7 @@ class HistorialPedidosServicio {
 
     fun obtenerTodosPedidosPrimitivos(): List<Map<String, Any>> {
         return try {
-            // ✅ TRANSFORMACIÓN COMPLEJA + AGREGACIÓN DE DATOS (lógica de negocio)
+            // TRANSFORMACIÓN COMPLEJA + AGREGACIÓN DE DATOS (lógica de negocio)
             val pedidosArray = historialPedidosDao.listarTodos()
 
             val resultado = mutableListOf<Map<String, Any>>()
@@ -46,7 +46,7 @@ class HistorialPedidosServicio {
                 resultado.add(mapOf(
                     "id" to id,
                     "nombreCliente" to nombreCliente,
-                    "fecha" to dateFormat.format(Date(fechaPedido.time)), // ✅ Formateo de fecha (lógica de negocio)
+                    "fecha" to dateFormat.format(Date(fechaPedido.time)), // Formateo de fecha (lógica de negocio)
                     "total" to total,
                     "cantidadProductos" to cantidadTotal,
                     "detalles" to detallesPrimitivos
@@ -59,16 +59,8 @@ class HistorialPedidosServicio {
         }
     }
 
-    fun obtenerTodosPedidos(): List<Array<Any>> {
-        return historialPedidosDao.listarTodos()
-    }
-
-    fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
-        return historialPedidosDao.obtenerDetallesPedido(idPedido)
-    }
-
     fun obtenerEstadisticasDia(): Pair<Double, Int> {
-        // ✅ AGREGACIÓN DE DATOS (lógica de negocio para reportes)
+        // AGREGACIÓN DE DATOS (lógica de negocio para reportes)
         val ventas = historialPedidosDao.calcularVentasDia()
         val totalPedidos = historialPedidosDao.contarPedidosHoy()
         return Pair(ventas, totalPedidos)
@@ -76,7 +68,7 @@ class HistorialPedidosServicio {
 
     fun eliminarPedidoCompleto(id: Int): Result<Boolean> {
         return try {
-            // ✅ VALIDACIÓN DE NEGOCIO
+            // VALIDACIÓN DE NEGOCIO
             if (id <= 0) {
                 return Result.failure(Exception("ID inválido"))
             }
@@ -93,19 +85,7 @@ class HistorialPedidosServicio {
         }
     }
 
-    fun calcularVentasPorPeriodo(fechaInicio: String, fechaFin: String): Double {
-        return historialPedidosDao.calcularVentasPorPeriodo(fechaInicio, fechaFin)
-    }
-
-    fun obtenerPedidosPorRangoFechas(fechaInicio: String, fechaFin: String): List<Array<Any>> {
-        return historialPedidosDao.listarPorRangoFechas(fechaInicio, fechaFin)
-    }
-
-    fun obtenerEstadisticasCompletas(): Map<String, Any> {
-        return historialPedidosDao.obtenerEstadisticasCompletas()
-    }
-
-    // ✅ LÓGICA DE NEGOCIO PURA (construcción de mensajes y formateo)
+    // LÓGICA DE NEGOCIO PURA (construcción de mensajes y formateo)
     fun construirMensajeDetallePrimitivo(
         id: Int,
         nombreCliente: String,
@@ -131,140 +111,7 @@ class HistorialPedidosServicio {
             append("\n💰 Total: S/ ${formatearPrecio(total)}")
         }
     }
-
-    fun construirMensajeDetalle(pedidoArray: Array<Any>, detalles: List<Array<Any>>): String {
-        val id = pedidoArray[0] as Int
-        val nombreCliente = pedidoArray[1] as String
-        val fechaPedido = pedidoArray[2]
-        val total = pedidoArray[3] as Double
-
-        return buildString {
-            append("📦 Pedido #$id\n\n")
-            append("👤 Cliente: $nombreCliente\n")
-            append("📅 Fecha: $fechaPedido\n\n")
-            append("🛒 Productos:\n")
-
-            for (detalle in detalles) {
-                val cantidad = detalle[2] as Int
-                val precioUnitario = detalle[3] as Double
-                val nombreProducto = detalle[4] as String
-                val subtotal = cantidad.toDouble() * precioUnitario
-
-                append("• $nombreProducto\n")
-                append("  $cantidad x S/ ${formatearPrecio(precioUnitario)}")
-                append(" = S/ ${formatearPrecio(subtotal)}\n")
-            }
-            append("\n💰 Total: S/ ${formatearPrecio(total)}")
-        }
-    }
-
-    // ✅ VALIDACIONES DE DOMINIO
-    fun validarFecha(fecha: String): Boolean {
-        return try {
-            val regex = "\\d{4}-\\d{2}-\\d{2}".toRegex()
-            regex.matches(fecha)
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    fun validarRangoFechas(fechaInicio: String, fechaFin: String): Boolean {
-        return validarFecha(fechaInicio) && validarFecha(fechaFin) && fechaInicio <= fechaFin
-    }
-
     fun formatearPrecio(precio: Double): String {
         return String.format("%.2f", precio)
-    }
-
-    fun formatearTotal(total: Double): String {
-        return String.format("%.2f", total)
-    }
-
-    // ✅ LÓGICA DE ANÁLISIS DE NEGOCIO (reportes y estadísticas)
-    fun calcularTotalVentas(pedidos: List<Array<Any>>): Double {
-        var totalVentas = 0.0
-        for (pedido in pedidos) {
-            totalVentas += (pedido[3] as Double)
-        }
-        return totalVentas
-    }
-
-    fun calcularPromedioVentas(pedidos: List<Array<Any>>): Double {
-        if (pedidos.isEmpty()) return 0.0
-        return calcularTotalVentas(pedidos) / pedidos.size
-    }
-
-    fun contarPedidosPorCliente(pedidos: List<Array<Any>>): Map<String, Int> {
-        val conteo = mutableMapOf<String, Int>()
-
-        for (pedido in pedidos) {
-            val nombreCliente = pedido[1] as String
-            conteo[nombreCliente] = (conteo[nombreCliente] ?: 0) + 1
-        }
-
-        return conteo
-    }
-
-    fun obtenerClientesMasFrecuentes(pedidos: List<Array<Any>>, limite: Int = 5): List<Pair<String, Int>> {
-        return contarPedidosPorCliente(pedidos)
-            .entries
-            .map { entry -> Pair(entry.key, entry.value) }
-            .sortedByDescending { pair -> pair.second }
-            .take(limite)
-    }
-
-    // ✅ LÓGICA DE FILTRADO Y ORDENAMIENTO (operaciones de negocio)
-    fun filtrarPedidosPorCliente(pedidos: List<Array<Any>>, nombreCliente: String): List<Array<Any>> {
-        val resultado = mutableListOf<Array<Any>>()
-        for (pedido in pedidos) {
-            val cliente = pedido[1] as String
-            if (cliente.contains(nombreCliente, ignoreCase = true)) {
-                resultado.add(pedido)
-            }
-        }
-        return resultado
-    }
-
-    fun filtrarPedidosPorMontoMinimo(pedidos: List<Array<Any>>, montoMinimo: Double): List<Array<Any>> {
-        val resultado = mutableListOf<Array<Any>>()
-        for (pedido in pedidos) {
-            val total = pedido[3] as Double
-            if (total >= montoMinimo) {
-                resultado.add(pedido)
-            }
-        }
-        return resultado
-    }
-
-    fun ordenarPedidosPorFecha(pedidos: List<Array<Any>>, ascendente: Boolean = false): List<Array<Any>> {
-        return if (ascendente) {
-            pedidos.sortedWith { pedido1, pedido2 ->
-                val fecha1 = pedido1[2] as java.sql.Timestamp
-                val fecha2 = pedido2[2] as java.sql.Timestamp
-                fecha1.compareTo(fecha2)
-            }
-        } else {
-            pedidos.sortedWith { pedido1, pedido2 ->
-                val fecha1 = pedido1[2] as java.sql.Timestamp
-                val fecha2 = pedido2[2] as java.sql.Timestamp
-                fecha2.compareTo(fecha1)
-            }
-        }
-    }
-
-    fun ordenarPedidosPorTotal(pedidos: List<Array<Any>>, ascendente: Boolean = false): List<Array<Any>> {
-        return if (ascendente) {
-            pedidos.sortedWith { pedido1, pedido2 ->
-                val total1 = pedido1[3] as Double
-                val total2 = pedido2[3] as Double
-                total1.compareTo(total2)
-            }
-        } else {
-            pedidos.sortedWith { pedido1, pedido2 ->
-                val total1 = pedido1[3] as Double
-                val total2 = pedido2[3] as Double
-                total2.compareTo(total1)
-            }
-        }
     }
 }

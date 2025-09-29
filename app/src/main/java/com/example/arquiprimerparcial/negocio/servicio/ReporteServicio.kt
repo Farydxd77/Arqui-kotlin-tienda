@@ -10,7 +10,7 @@ class ReporteServicio {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val displayDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    // ✅ OBTENER DATOS PARA REPORTE COMPLETO
+    // OBTENER DATOS PARA REPORTE COMPLETO
     fun generarDatosReporte(tipoReporte: String): Map<String, Any> {
         val fechas = calcularRangoFechas(tipoReporte)
         val fechaInicio = fechas.first
@@ -66,7 +66,7 @@ class ReporteServicio {
         return datos
     }
 
-    // ✅ CALCULAR RANGOS DE FECHAS
+    // CALCULAR RANGOS DE FECHAS
     private fun calcularRangoFechas(tipoReporte: String): Pair<Calendar, Calendar> {
         val fechaInicio = Calendar.getInstance()
         val fechaFin = Calendar.getInstance()
@@ -163,7 +163,7 @@ class ReporteServicio {
         }
     }
 
-    // ✅ FORMATEO DE NÚMEROS
+    // FORMATEO DE NÚMEROS
     fun formatearPrecio(precio: Double): String {
         return String.format("%.2f", precio)
     }

@@ -216,10 +216,10 @@ class OperacionProductoActivity : AppCompatActivity() {
             // Si hay una imagen seleccionada, subirla primero
             if (selectedImageUri != null) {
                 binding.tvEstadoSubida.isVisible = true
-                binding.tvEstadoSubida.text = "☁️ Subiendo imagen a Cloudinary..."
+                binding.tvEstadoSubida.text = "Subiendo imagen a Cloudinary..."
 
                 imageUrl = CloudinaryHelper.uploadImage(selectedImageUri!!)
-                binding.tvEstadoSubida.text = "✅ Imagen subida"
+                binding.tvEstadoSubida.text = "Imagen subida"
             }
 
             val nombre = binding.etDescripcion.text.toString().trim()
@@ -254,7 +254,7 @@ class OperacionProductoActivity : AppCompatActivity() {
                 is UiState.Error -> mostrarError(result.message)
                 is UiState.Success -> {
                     if (result.data.isSuccess) {
-                        Toast.makeText(this@OperacionProductoActivity, "✅ Producto guardado", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@OperacionProductoActivity, "Producto guardado", Toast.LENGTH_SHORT).show()
                         limpiarCampos()
                         binding.etDescripcion.requestFocus()
                         productoId = 0
@@ -267,7 +267,7 @@ class OperacionProductoActivity : AppCompatActivity() {
         } catch (e: Exception) {
             binding.progressBar.isVisible = false
             binding.tvEstadoSubida.isVisible = false
-            mostrarError("❌ Error al subir imagen: ${e.message}")
+            mostrarError("Error al subir imagen: ${e.message}")
         }
     }
 

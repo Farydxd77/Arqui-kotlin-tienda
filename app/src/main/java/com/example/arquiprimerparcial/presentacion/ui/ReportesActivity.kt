@@ -75,7 +75,7 @@ class ReportesActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "✅ Permisos concedidos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permisos concedidos", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(
                     this,
@@ -144,7 +144,7 @@ class ReportesActivity : AppCompatActivity() {
         val nombreArchivo = File(rutaPdf).name
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("✅ Reporte Generado Exitosamente")
+            .setTitle("Reporte Generado Exitosamente")
             .setMessage("El reporte se ha generado y guardado en:\n\n📁 Carpeta: Descargas\n📄 Archivo: $nombreArchivo")
             .setPositiveButton("Abrir PDF") { _, _ ->
                 abrirPDF(rutaPdf)
@@ -171,7 +171,7 @@ class ReportesActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(
                 this,
-                "❌ No se encontró una app para abrir PDFs",
+                "No se encontró una app para abrir PDFs",
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -179,7 +179,7 @@ class ReportesActivity : AppCompatActivity() {
 
     private fun mostrarError(mensaje: String) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("❌ Error")
+            .setTitle("Error")
             .setMessage(mensaje)
             .setPositiveButton("OK", null)
             .show()

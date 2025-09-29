@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
 
 class ProductoActivity : AppCompatActivity() {
 
-    // ✅ Instancia del servicio
+
     private val productoServicio: ProductoServicio = ProductoServicio()
 
     private lateinit var binding: ActivityProductoBinding

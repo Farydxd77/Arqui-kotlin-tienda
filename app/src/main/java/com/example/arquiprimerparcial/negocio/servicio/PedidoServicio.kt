@@ -7,7 +7,7 @@ import java.sql.Timestamp
 
 class PedidoServicio {
 
-    // ✅ Instancias privadas de los DAOs
+    // Instancias privadas de los DAOs
     private val pedidoDao: PedidoDao = PedidoDao()
     private val detallePedidoDao: DetallePedidoDao = DetallePedidoDao()
     private val productoDao: ProductoDao = ProductoDao()
@@ -106,106 +106,6 @@ class PedidoServicio {
         }
     }
 
-    fun obtenerPedidosPrimitivos(): List<Map<String, Any>> {
-        return try {
-            val pedidosArray = pedidoDao.listar()
-
-            val resultado = mutableListOf<Map<String, Any>>()
-
-            for (pedido in pedidosArray) {
-                val id = pedido[0] as Int
-                val nombreCliente = pedido[1] as String
-                val fechaPedido = pedido[2] as java.sql.Timestamp
-                val total = pedido[3] as Double
-
-                val detallesArray = detallePedidoDao.listarPorPedido(id)
-                val detallesPrimitivos = mutableListOf<Map<String, Any>>()
-                var cantidadTotal = 0
-
-                for (detalle in detallesArray) {
-                    val cantidad = detalle[2] as Int
-                    val precioUnitario = detalle[3] as Double
-                    cantidadTotal += cantidad
-
-                    detallesPrimitivos.add(mapOf(
-                        "idProducto" to (detalle[1] as Int),
-                        "nombreProducto" to (detalle[4] as String),
-                        "cantidad" to cantidad,
-                        "precioUnitario" to precioUnitario,
-                        "subtotal" to (cantidad.toDouble() * precioUnitario)
-                    ))
-                }
-
-                resultado.add(mapOf(
-                    "id" to id,
-                    "nombreCliente" to nombreCliente,
-                    "fecha" to fechaPedido,
-                    "total" to total,
-                    "cantidadProductos" to cantidadTotal,
-                    "detalles" to detallesPrimitivos
-                ))
-            }
-
-            resultado
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    fun obtenerPedidos(): List<Array<Any>> {
-        return pedidoDao.listar()
-    }
-
-    fun obtenerPedidoPorId(id: Int): Array<Any>? {
-        return pedidoDao.obtenerPorId(id)
-    }
-
-    fun obtenerDetallesPedido(idPedido: Int): List<Array<Any>> {
-        return detallePedidoDao.listarPorPedido(idPedido)
-    }
-
-    fun eliminarPedido(id: Int): Result<Boolean> {
-        return try {
-            if (id <= 0) {
-                return Result.failure(Exception("ID de pedido inválido"))
-            }
-
-            val resultado = pedidoDao.eliminar(id)
-            if (resultado) {
-                Result.success(true)
-            } else {
-                Result.failure(Exception("Error al eliminar el pedido"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    fun obtenerVentasDelDia(): Double {
-        return pedidoDao.calcularVentasDia()
-    }
-
-    fun obtenerTotalPedidosHoy(): Int {
-        return pedidoDao.contarPedidosHoy()
-    }
-
-    fun validarStockDisponible(idProducto: Int, cantidadSolicitada: Int): Result<Boolean> {
-        return try {
-            val productoArray = productoDao.obtenerPorId(idProducto)
-            if (productoArray == null) {
-                return Result.failure(Exception("Producto no encontrado"))
-            }
-
-            val stock = productoArray[5] as Int
-            if (stock < cantidadSolicitada) {
-                return Result.failure(Exception("Stock insuficiente. Disponible: $stock"))
-            }
-
-            Result.success(true)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     fun calcularTotalDetalles(detalles: List<Array<Any>>): Double {
         var total = 0.0
@@ -217,52 +117,4 @@ class PedidoServicio {
         return total
     }
 
-    fun calcularSubtotal(cantidad: Int, precioUnitario: Double): Double {
-        return cantidad * precioUnitario
-    }
-
-    fun formatearTotal(total: Double): String {
-        return String.format("%.2f", total)
-    }
-
-    fun formatearPrecio(precio: Double): String {
-        return String.format("%.2f", precio)
-    }
-
-    fun cantidadTotalProductos(detalles: List<Array<Any>>): Int {
-        var total = 0
-        for (detalle in detalles) {
-            total += detalle[1] as Int
-        }
-        return total
-    }
-
-    fun validarNombreCliente(nombre: String): Boolean {
-        return nombre.isNotBlank() && nombre.length <= 100
-    }
-
-    fun validarCantidad(cantidad: String): Boolean {
-        return try {
-            val cant = cantidad.toInt()
-            cant > 0
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
-    fun validarDetalles(detalles: List<Array<Any>>): Boolean {
-        if (detalles.isEmpty()) return false
-
-        return detalles.all { detalle ->
-            try {
-                val idProducto = detalle[0] as Int
-                val cantidad = detalle[1] as Int
-                val precioUnitario = detalle[2] as Double
-
-                idProducto > 0 && cantidad > 0 && precioUnitario > 0.0
-            } catch (e: Exception) {
-                false
-            }
-        }
-    }
 }

@@ -236,7 +236,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun mostrarExitoReporte(rutaPdf: String) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("✅ Reporte Generado Exitosamente")
+            .setTitle("Reporte Generado Exitosamente")
             .setMessage("El reporte se ha generado y guardado en:\n\n📁 Descargas/\n📄 ${File(rutaPdf).name}")
             .setPositiveButton("Abrir PDF") { _, _ ->
                 abrirPDF(rutaPdf)
@@ -261,7 +261,7 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "❌ No se encontró una app para abrir PDFs", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "No se encontró una app para abrir PDFs", Toast.LENGTH_SHORT).show()
         }
     }
 

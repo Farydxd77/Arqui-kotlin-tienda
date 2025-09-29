@@ -106,7 +106,7 @@ class OperacionCategoriaActivity : AppCompatActivity() {
             is UiState.Error -> mostrarError(result.message)
             is UiState.Success -> {
                 if (result.data.isSuccess) {
-                    val mensaje = if (categoriaId == 0) "✅ Categoría creada" else "✅ Categoría actualizada"
+                    val mensaje = if (categoriaId == 0) "Categoría creada" else "Categoría actualizada"
                     Toast.makeText(this@OperacionCategoriaActivity, mensaje, Toast.LENGTH_SHORT).show()
 
                     if (categoriaId == 0) {
