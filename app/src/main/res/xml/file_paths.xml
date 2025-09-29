@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Acceso a todos los archivos en el almacenamiento externo -->
+    <external-path
+        name="external_files"
+        path="." />
+
+    <!-- Archivos específicos de la app en almacenamiento externo -->
+    <external-files-path
+        name="external_app_files"
+        path="." />
+
+    <!-- Caché externo -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+
+    <!-- Archivos internos de la app -->
+    <files-path
+        name="internal_files"
+        path="." />
+
+    <!-- Caché interno -->
+    <cache-path
+        name="cache_files"
+        path="." />
+
+    <!-- Para la carpeta Downloads específicamente -->
+    <external-path
+        name="downloads"
+        path="Download/" />
+</paths>

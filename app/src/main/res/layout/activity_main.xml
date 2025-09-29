@@ -76,7 +76,7 @@
                     android:backgroundTint="@color/primaryLight"
                     android:drawableLeft="@android:drawable/ic_menu_manage"
                     android:drawableTint="@color/white"
-                    android:text="📦 Gestionar Productos"
+                    android:text="📦 Productos"
                     android:textColor="@color/white"
                     app:cornerRadius="12dp" />
 
@@ -97,6 +97,27 @@
 
         </LinearLayout>
 
+        <!-- ✅ NUEVO: Botón de Reportes -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_exportar_reportes"
+            android:layout_width="0dp"
+            android:layout_height="65dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#FF6B35"
+            android:drawableLeft="@android:drawable/ic_menu_save"
+            android:drawableTint="@color/white"
+            android:text="📊 EXPORTAR REPORTES PDF"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_save"
+            app:iconTint="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layout_botones" />
+
         <!-- Búsqueda de Productos -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_buscar"
@@ -110,7 +131,7 @@
             app:endIconTint="@color/secondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/layout_botones">
+            app:layout_constraintTop_toBottomOf="@+id/btn_exportar_reportes">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_buscar"
@@ -119,7 +140,7 @@
                 android:hint="Buscar productos..." />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Lista de Productos (Vista previa en el dashboard) -->
+        <!-- Lista de Productos -->
         <TextView
             android:id="@+id/tv_titulo_productos"
             android:layout_width="wrap_content"

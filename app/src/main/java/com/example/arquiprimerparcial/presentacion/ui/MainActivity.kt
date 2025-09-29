@@ -1,8 +1,9 @@
-// MainActivity.kt
 package com.example.arquiprimerparcial.presentacion.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -15,6 +16,8 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,24 +25,30 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.arquiprimerparcial.R
 import com.example.arquiprimerparcial.databinding.ActivityMainBinding
 import com.example.arquiprimerparcial.negocio.servicio.ProductoServicio
+import com.example.arquiprimerparcial.negocio.servicio.ReporteServicio
 import com.example.arquiprimerparcial.presentacion.common.UiState
+import com.example.arquiprimerparcial.utils.PdfGenerator
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: ProductoAdapterIntegrado
 
-    // ✅ CORRECTO - Solo instancia del SERVICIO
     private val productoServicio: ProductoServicio = ProductoServicio()
+    private val reporteServicio: ReporteServicio = ReporteServicio()
+
+    private val PERMISSION_REQUEST_CODE = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        verificarPermisos()
         initAdapter()
         initListener()
         cargarProductos("")
@@ -50,6 +59,35 @@ class MainActivity : AppCompatActivity() {
         if (!existeCambio) return
         existeCambio = false
         cargarProductos(binding.etBuscar.text.toString().trim())
+    }
+
+    private fun verificarPermisos() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "✅ Permisos concedidos", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "⚠️ Se necesitan permisos para exportar PDFs", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun initAdapter() {
@@ -120,6 +158,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, HistorialPedidosActivity::class.java))
         }
 
+        // En initListener() de MainActivity.kt
+        binding.btnExportarReportes.setOnClickListener {
+            startActivity(Intent(this, ReportesActivity::class.java))
+        }
+
         binding.tilBuscar.setEndIconOnClickListener {
             cargarProductos(binding.etBuscar.text.toString().trim())
         }
@@ -134,6 +177,92 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun mostrarDialogoReportes() {
+        val opciones = arrayOf(
+            "📅 Reporte del Día",
+            "📆 Reporte de la Semana Actual",
+            "📊 Reporte del Mes Actual",
+            "🗓️ Últimos 7 Días",
+            "📈 Últimos 30 Días",
+            "📉 Mes Pasado"
+        )
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("📊 Generar Reporte en PDF")
+            .setMessage("Seleccione el período del reporte:")
+            .setItems(opciones) { _, which ->
+                val tipoReporte = when (which) {
+                    0 -> "HOY"
+                    1 -> "SEMANA_ACTUAL"
+                    2 -> "MES_ACTUAL"
+                    3 -> "ULTIMOS_7_DIAS"
+                    4 -> "ULTIMOS_30_DIAS"
+                    5 -> "MES_PASADO"
+                    else -> "HOY"
+                }
+                generarReportePDF(tipoReporte)
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun generarReportePDF(tipoReporte: String) = lifecycleScope.launch {
+        binding.progressBar.isVisible = true
+
+        val result = withContext(Dispatchers.IO) {
+            try {
+                val datosReporte = reporteServicio.generarDatosReporte(tipoReporte)
+                val pdfGenerator = PdfGenerator(this@MainActivity)
+                val rutaPdf = pdfGenerator.generarReportePDF(datosReporte)
+                UiState.Success(rutaPdf)
+            } catch (e: Exception) {
+                UiState.Error(e.message ?: "Error al generar el reporte")
+            }
+        }
+
+        binding.progressBar.isVisible = false
+
+        when (result) {
+            is UiState.Success -> {
+                mostrarExitoReporte(result.data)
+            }
+            is UiState.Error -> {
+                mostrarError(result.message)
+            }
+        }
+    }
+
+    private fun mostrarExitoReporte(rutaPdf: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("✅ Reporte Generado Exitosamente")
+            .setMessage("El reporte se ha generado y guardado en:\n\n📁 Descargas/\n📄 ${File(rutaPdf).name}")
+            .setPositiveButton("Abrir PDF") { _, _ ->
+                abrirPDF(rutaPdf)
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun abrirPDF(rutaPdf: String) {
+        val file = File(rutaPdf)
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            this,
+            "${applicationContext.packageName}.provider",
+            file
+        )
+
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "❌ No se encontró una app para abrir PDFs", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun cargarProductos(filtro: String) = lifecycleScope.launch {
@@ -174,7 +303,7 @@ class MainActivity : AppCompatActivity() {
             is UiState.Error -> mostrarError(result.message)
             is UiState.Success -> {
                 if (result.data.isSuccess) {
-                    Toast.makeText(this@MainActivity, "Registro eliminado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "✅ Registro eliminado", Toast.LENGTH_SHORT).show()
                     cargarProductos(binding.etBuscar.text.toString().trim())
                 } else {
                     mostrarError("Error al eliminar el producto")
